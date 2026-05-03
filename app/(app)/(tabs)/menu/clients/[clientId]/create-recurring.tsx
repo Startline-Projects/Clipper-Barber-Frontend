@@ -112,7 +112,7 @@ export default function CreateRecurringScreen() {
                   onPress={() => setDayOfWeek(i)}
                   className={`px-4 py-[10px] rounded-sm border-[1.5px] ${
                     dayOfWeek === i
-                      ? 'border-ink bg-ink'
+                      ? 'border-green bg-green'
                       : 'border-separator-opaque bg-surface'
                   }`}
                 >
@@ -150,7 +150,7 @@ export default function CreateRecurringScreen() {
                   onPress={() => setFrequency(f.value)}
                   className={`flex-1 py-[10px] rounded-sm items-center border-[1.5px] ${
                     frequency === f.value
-                      ? 'border-ink bg-ink'
+                      ? 'border-green bg-green'
                       : 'border-separator-opaque bg-surface'
                   }`}
                 >
@@ -221,7 +221,7 @@ export default function CreateRecurringScreen() {
                     setShowTimePicker(false);
                   }}
                   className={`py-[14px] px-4 rounded-md mb-1 ${
-                    time === slot ? 'bg-ink' : 'active:bg-bg'
+                    time === slot ? 'bg-green' : 'active:bg-bg'
                   }`}
                 >
                   <Text
@@ -263,7 +263,7 @@ export default function CreateRecurringScreen() {
                     setShowServicePicker(false);
                   }}
                   className={`py-[14px] px-4 rounded-md mb-1 ${
-                    selectedService?.id === s.id ? 'bg-ink' : 'active:bg-bg'
+                    selectedService?.id === s.id ? 'bg-green' : 'active:bg-bg'
                   }`}
                 >
                   <Text

@@ -81,7 +81,7 @@ export default function ClientsScreen() {
             onPress={() => setSortBy(opt.value)}
             className={`px-3 py-[7px] rounded-full border-[1.5px] ${
               sortBy === opt.value
-                ? 'border-ink bg-ink'
+                ? 'border-green bg-green'
                 : 'border-separator-opaque bg-surface'
             }`}
           >

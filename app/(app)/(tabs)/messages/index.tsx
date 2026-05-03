@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
   Pressable,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -36,8 +37,18 @@ export default function MessagesScreen() {
   const router = useRouter();
   const colors = useColors();
 
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setDebouncedSearch(search.trim());
+    }, 300);
+    return () => clearTimeout(id);
+  }, [search]);
+
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } =
-    useConversations({});
+    useConversations({ search: debouncedSearch || undefined });
 
   const conversations = useMemo(
     () => data?.pages.flatMap((p) => p.conversations) ?? [],
@@ -50,6 +61,32 @@ export default function MessagesScreen() {
         <Header title="Messages" />
       </View>
 
+      {/* Search */}
+      <View className="mx-5 mb-3 px-4 py-[10px] rounded-xl bg-surface flex-row items-center gap-2">
+        <Icon name="search" size={16} color={colors.tertiary} />
+        <TextInput
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Search messages"
+          placeholderTextColor={colors.tertiary}
+          className="flex-1 text-[15px] text-ink"
+          returnKeyType="search"
+          autoCorrect={false}
+          autoCapitalize="none"
+        />
+        {search.length > 0 && (
+          <Pressable
+            onPress={() => setSearch('')}
+            hitSlop={8}
+            className="active:opacity-70"
+            accessibilityLabel="Clear search"
+            accessibilityRole="button"
+          >
+            <Icon name="close" size={14} color={colors.tertiary} />
+          </Pressable>
+        )}
+      </View>
+
       {isLoading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator color={colors.tertiary} />
@@ -60,33 +97,35 @@ export default function MessagesScreen() {
             <Icon name="chat" size={24} color={colors.tertiary} />
           </View>
           <Text className="text-[15px] font-medium text-tertiary">
-            No messages yet
+            {debouncedSearch ? 'No matches found' : 'No messages yet'}
           </Text>
         </View>
       ) : (
-        <FlatList
-          data={conversations}
-          keyExtractor={(c) => c.id}
-          contentContainerClassName="px-5"
-          onEndReached={() => {
-            if (hasNextPage && !isFetchingNextPage) fetchNextPage();
-          }}
-          onEndReachedThreshold={0.5}
-          ListFooterComponent={
-            isFetchingNextPage ? (
-              <ActivityIndicator className="py-4" color={colors.tertiary} />
-            ) : null
-          }
-          renderItem={({ item: c, index }) => (
-            <ConversationRow
-              conversation={c}
-              last={index === conversations.length - 1}
-              onPress={() =>
-                router.push(`/(app)/(tabs)/messages/${c.id}`)
-              }
-            />
-          )}
-        />
+        <Card elevated className="mx-5 p-0 overflow-hidden rounded-2xl">
+          <FlatList
+            data={conversations}
+            keyExtractor={(c) => c.id}
+            contentContainerClassName=""
+            onEndReached={() => {
+              if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+            }}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={
+              isFetchingNextPage ? (
+                <ActivityIndicator className="py-4" color={colors.tertiary} />
+              ) : null
+            }
+            renderItem={({ item: c, index }) => (
+              <ConversationRow
+                conversation={c}
+                last={index === conversations.length - 1}
+                onPress={() =>
+                  router.push(`/(app)/(tabs)/messages/${c.id}`)
+                }
+              />
+            )}
+          />
+        </Card>
       )}
     </SafeAreaView>
   );
@@ -107,7 +146,7 @@ function ConversationRow({
   return (
     <Pressable
       onPress={onPress}
-      className={`flex-row items-center gap-3 px-4 py-[14px] bg-card ${
+      className={`flex-row items-center gap-3 py-[14px] bg-card active:opacity-70 ${
         !last ? 'border-b border-separator' : ''
       }`}
     >

@@ -125,7 +125,7 @@ export default function ReviewsScreen() {
                   onPress={() => setRatingFilter(r)}
                   className={`px-4 py-[8px] rounded-full border-[1.5px] ${
                     ratingFilter === r
-                      ? 'border-ink bg-ink'
+                      ? 'border-green bg-green'
                       : 'border-separator-opaque bg-surface'
                   }`}
                 >

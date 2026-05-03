@@ -167,12 +167,24 @@ function WeekView({
   onGoToToday: () => void;
 }) {
   const colors = useColors();
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const isCurrentWeek = weekDates.some((d) => isSameDay(d, today));
 
   const rangeLabel = `${weekDates[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${weekDates[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
 
+  const selectedBookings = useMemo(() => {
+    if (!selectedDate) return [];
+    return bookings
+      .filter((b) => isSameDay(new Date(b.scheduledAt), selectedDate))
+      .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
+  }, [bookings, selectedDate]);
+
+  const selectedDateLabel = selectedDate
+    ? selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+    : '';
+
   return (
-    <View className="flex-1 px-5">
+    <ScrollView className="flex-1 px-5">
       {/* Week navigation */}
       <View className="flex-row items-center justify-between mb-3">
         <Pressable onPress={() => onChangeWeek(-1)} className="p-2">
@@ -197,85 +209,126 @@ function WeekView({
       <View className="flex-row mb-2">
         <View style={{ width: TIME_GUTTER }} />
         {weekDates.map((d, i) => {
-          const isToday = isSameDay(d, today);
+          const isSelected = selectedDate ? isSameDay(d, selectedDate) : false;
           return (
-            <View key={i} style={{ width: COL_WIDTH }} className="items-center">
-              <Text className="text-[11px] font-semibold text-tertiary tracking-[0.3px]">
+            <Pressable
+              key={i}
+              onPress={() => setSelectedDate(isSelected ? null : d)}
+              style={{ width: COL_WIDTH }}
+              className="items-center active:opacity-70"
+            >
+              <Text className="text-[11px] font-semibold text-gray-900 dark:text-white tracking-[0.3px]">
                 {DAY_NAMES[i]}
               </Text>
               <View
-                style={isToday ? { backgroundColor: colors.ink } : undefined}
-                className="w-7 h-7 rounded-full items-center justify-center mt-1"
+                className={`w-7 h-7 rounded-full items-center justify-center mt-1 ${
+                  isSelected ? 'bg-green dark:bg-green' : ''
+                }`}
               >
                 <Text
-                  style={isToday ? { color: colors.bg } : undefined}
                   className={`text-[14px] font-bold ${
-                    isToday ? '' : 'text-ink'
+                    isSelected
+                      ? 'text-white dark:text-white'
+                      : 'text-gray-400 dark:text-gray-500'
                   }`}
                 >
                   {d.getDate()}
                 </Text>
               </View>
-            </View>
+            </Pressable>
           );
         })}
       </View>
 
       {/* Hour rows */}
-      <ScrollView>
-        {HOURS.map((hr) => (
-          <View
-            key={hr}
-            className="flex-row border-t border-separator"
-            style={{ minHeight: 48 }}
-          >
-            <View style={{ width: TIME_GUTTER }} className="items-end pr-[6px] pt-[3px]">
-              <Text className="text-[10px] font-medium text-quaternary tracking-[-0.2px]">
-                {formatHour(hr)}
-              </Text>
-            </View>
-            {weekDates.map((wd, di) => {
-              const slot = bookings.find((b) => {
-                const bd = new Date(b.scheduledAt);
-                return isSameDay(bd, wd) && bd.getHours() === hr;
-              });
-
-              if (!slot) return <View key={di} style={{ width: COL_WIDTH }} />;
-
-              const tc = TYPE_COLORS[slot.bookingType] ?? '#30D158';
-              return (
-                <Pressable
-                  key={di}
-                  onPress={() => onPress(slot.id)}
-                  className="rounded-xs px-[4px] py-[5px] mx-[1px]"
-                  style={{
-                    width: COL_WIDTH - 2,
-                    backgroundColor: tc + '12',
-                    borderLeftWidth: 3,
-                    borderLeftColor: tc,
-                    minHeight: 40,
-                  }}
-                >
-                  <Text
-                    className="text-[10px] font-bold text-ink leading-[12px] tracking-[-0.1px]"
-                    numberOfLines={1}
-                  >
-                    {slot.isRecurring ? '↻ ' : ''}
-                    {slot.client.name}
-                  </Text>
-                  <Text
-                    style={{ color: tc }}
-                    className="text-[9px] font-semibold mt-[1px]"
-                  >
-                    ${slot.totalPrice}
-                  </Text>
-                </Pressable>
-              );
-            })}
+      {HOURS.map((hr) => (
+        <View
+          key={hr}
+          className="flex-row border-t border-separator"
+          style={{ minHeight: 48 }}
+        >
+          <View style={{ width: TIME_GUTTER }} className="items-end pr-[6px] pt-[3px]">
+            <Text className="text-[10px] font-medium text-quaternary tracking-[-0.2px]">
+              {formatHour(hr)}
+            </Text>
           </View>
-        ))}
-      </ScrollView>
-    </View>
+          {weekDates.map((wd, di) => {
+            const slot = bookings.find((b) => {
+              const bd = new Date(b.scheduledAt);
+              return isSameDay(bd, wd) && bd.getHours() === hr;
+            });
+
+            if (!slot) return <View key={di} style={{ width: COL_WIDTH }} />;
+
+            const tc = TYPE_COLORS[slot.bookingType] ?? '#30D158';
+            return (
+              <Pressable
+                key={di}
+                onPress={() => onPress(slot.id)}
+                className="rounded-xs px-[4px] py-[5px] mx-[1px]"
+                style={{
+                  width: COL_WIDTH - 2,
+                  backgroundColor: tc + '12',
+                  borderLeftWidth: 3,
+                  borderLeftColor: tc,
+                  minHeight: 40,
+                }}
+              >
+                <Text
+                  className="text-[10px] font-bold text-ink leading-[12px] tracking-[-0.1px]"
+                  numberOfLines={1}
+                >
+                  {slot.isRecurring ? '↻ ' : ''}
+                  {slot.client.name}
+                </Text>
+                <Text
+                  style={{ color: tc }}
+                  className="text-[9px] font-semibold mt-[1px]"
+                >
+                  ${slot.totalPrice}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      ))}
+
+      {/* Selected day bookings */}
+      {selectedDate && (
+        <View className="mt-4 mb-8">
+          <Text className="text-[15px] font-bold text-ink tracking-[-0.2px] mb-3">
+            {selectedDateLabel}
+          </Text>
+          {selectedBookings.length === 0 ? (
+            <View className="py-6 items-center">
+              <Text className="text-[13px] text-tertiary">No bookings</Text>
+            </View>
+          ) : (
+            <View className="gap-2">
+              {selectedBookings.map((b) => {
+                const time = new Date(b.scheduledAt).toLocaleTimeString('en-US', {
+                  hour: 'numeric',
+                  minute: '2-digit',
+                });
+                return (
+                  <BookingCard
+                    key={b.id}
+                    clientName={b.client.name}
+                    serviceName={b.service.name}
+                    time={time}
+                    price={b.totalPrice}
+                    bookingType={b.bookingType}
+                    status={b.status}
+                    isRecurring={b.isRecurring}
+                    onPress={() => onPress(b.id)}
+                  />
+                );
+              })}
+            </View>
+          )}
+        </View>
+      )}
+    </ScrollView>
   );
 }
 
@@ -385,7 +438,7 @@ function MonthView({
                 <View
                   style={
                     isSelected
-                      ? { backgroundColor: colors.blue }
+                      ? { backgroundColor: colors.green }
                       : isToday
                         ? { backgroundColor: colors.ink }
                         : undefined
@@ -393,7 +446,13 @@ function MonthView({
                   className="w-8 h-8 rounded-full items-center justify-center"
                 >
                   <Text
-                    style={isSelected || isToday ? { color: colors.bg } : undefined}
+                    style={
+                      isSelected
+                        ? { color: '#FFFFFF' }
+                        : isToday
+                          ? { color: colors.bg }
+                          : undefined
+                    }
                     className={`text-[15px] ${
                       isSelected || isToday ? 'font-bold' : 'text-ink'
                     }`}

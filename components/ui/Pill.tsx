@@ -10,7 +10,7 @@ interface PillProps {
 
 export default function Pill({ label, active, onPress, color }: PillProps) {
   const colors = useColors();
-  const activeBg = color ?? colors.ink;
+  const activeBg = color ?? colors.green;
 
   return (
     <Pressable
@@ -19,7 +19,7 @@ export default function Pill({ label, active, onPress, color }: PillProps) {
       className="self-start rounded-full px-3 py-2 active:opacity-70"
     >
       <Text
-        style={{ color: active ? colors.bg : colors.secondary }}
+        style={{ color: active ? '#FFFFFF' : colors.secondary }}
         className="text-[13px] font-semibold tracking-[-0.1px]"
       >
         {label}

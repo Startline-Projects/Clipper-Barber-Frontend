@@ -69,7 +69,7 @@ export default function ConversationScreen() {
       <View className="px-5">
         <Header
           title={otherParty?.name ?? 'Chat'}
-          onBack={() => router.back()}
+          onBack={() => router.replace('/(app)/(tabs)/messages')}
           right={
             otherParty ? (
               <Avatar name={otherParty.name} uri={otherParty.profilePhotoUrl ?? undefined} size={32} />

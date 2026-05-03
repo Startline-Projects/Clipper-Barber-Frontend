@@ -6,6 +6,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  Switch,
   Text,
   TextInput,
   View,
@@ -203,20 +204,18 @@ function ServiceRow({
             ` · AH ${formatPrice(service.afterHoursPriceUsd)}`}
         </Text>
       </View>
-      <Pressable
-        onPress={(e) => {
-          e.stopPropagation();
-          onToggle();
-        }}
-        hitSlop={8}
+      <View
         className="ml-3"
+        onStartShouldSetResponder={() => true}
+        onTouchEnd={(e) => e.stopPropagation()}
       >
-        <View
-          className={`w-[10px] h-[10px] rounded-full ${
-            service.isActive ? 'bg-green' : 'bg-separator-opaque'
-          }`}
+        <Switch
+          value={service.isActive}
+          onValueChange={onToggle}
+          trackColor={{ false: '#374151', true: '#22c55e' }}
+          thumbColor="#ffffff"
         />
-      </Pressable>
+      </View>
       <View className="ml-2">
         <Icon name="chevron" size={16} color={colors.quaternary} />
       </View>
@@ -383,15 +382,17 @@ function ServiceEditor({
                   <Pressable
                     key={t.value}
                     onPress={() => setType(t.value)}
-                    className={`px-4 py-[10px] rounded-sm border-[1.5px] ${
+                    className={`px-4 py-[10px] rounded-sm active:opacity-70 ${
                       type === t.value
-                        ? 'border-ink bg-ink'
-                        : 'border-separator-opaque bg-bg'
+                        ? 'bg-green'
+                        : 'bg-gray-100 dark:bg-gray-800'
                     }`}
                   >
                     <Text
                       className={`text-[13px] font-semibold ${
-                        type === t.value ? 'text-white' : 'text-ink'
+                        type === t.value
+                          ? 'text-white'
+                          : 'text-gray-700 dark:text-gray-300'
                       }`}
                     >
                       {t.label}
@@ -409,15 +410,17 @@ function ServiceEditor({
                   <Pressable
                     key={d}
                     onPress={() => setDuration(d)}
-                    className={`flex-1 py-[10px] rounded-sm items-center border-[1.5px] ${
+                    className={`flex-1 py-[10px] rounded-sm items-center active:opacity-70 ${
                       duration === d
-                        ? 'border-ink bg-ink'
-                        : 'border-separator-opaque bg-bg'
+                        ? 'bg-green'
+                        : 'bg-gray-100 dark:bg-gray-800'
                     }`}
                   >
                     <Text
                       className={`text-[13px] font-semibold ${
-                        duration === d ? 'text-white' : 'text-ink'
+                        duration === d
+                          ? 'text-white'
+                          : 'text-gray-700 dark:text-gray-300'
                       }`}
                     >
                       {d}m
