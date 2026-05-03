@@ -1,6 +1,5 @@
 import { useRef, useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -16,8 +15,8 @@ import Icon from '@/components/ui/Icon';
 import Btn from '@/components/ui/Btn';
 import TextField from '@/components/forms/TextField';
 import Header from '@/components/ui/Header';
-import Divider from '@/components/ui/Divider';
 import { useLogin } from '@/lib/hooks/useAuth';
+import { toast } from '@/lib/stores/toast';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -51,10 +50,7 @@ export default function LoginScreen() {
       { email: email.trim().toLowerCase(), password, role: 'barber' },
       {
         onError: () =>
-          Alert.alert(
-            'Login failed',
-            'Invalid email or password. Please try again.',
-          ),
+          toast.error('Invalid email or password. Please try again.'),
       },
     );
   };

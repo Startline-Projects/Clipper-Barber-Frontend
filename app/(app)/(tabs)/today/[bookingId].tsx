@@ -24,6 +24,9 @@ import {
   useCancelBooking,
   useNoShowBooking,
 } from '@/lib/hooks/useBookings';
+import { useStartConversation } from '@/lib/hooks/useConversations';
+import { toast } from '@/lib/stores/toast';
+import { getReadableError } from '@/lib/utils/get-readable-error';
 
 const TYPE_LABELS: Record<string, string> = {
   regular: 'Regular',
@@ -52,6 +55,7 @@ export default function BookingDetailScreen() {
   const colors = useColors();
   const cancelMut = useCancelBooking();
   const noShowMut = useNoShowBooking();
+  const startConvo = useStartConversation();
   const [showNoShowSheet, setShowNoShowSheet] = useState(false);
 
   const { data, isLoading } = useBookingDetail(bookingId ?? '');
@@ -77,17 +81,39 @@ export default function BookingDetailScreen() {
         text: 'Cancel Booking',
         style: 'destructive',
         onPress: () =>
-          cancelMut.mutate(b.id, { onSuccess: () => router.back() }),
+          cancelMut.mutate(b.id, {
+            onSuccess: () => {
+              toast.success('Booking cancelled');
+              router.back();
+            },
+          }),
       },
     ]);
   };
 
   const handleNoShow = () => setShowNoShowSheet(true);
 
+  const handleMessage = () => {
+    if (startConvo.isPending) return;
+    startConvo.mutate(b.client.id, {
+      onSuccess: (convo) => {
+        router.push(`/(app)/(tabs)/messages/${convo.id}`);
+      },
+      onError: (err) => {
+        toast.error(getReadableError(err));
+      },
+    });
+  };
+
   const confirmNoShow = () => {
     noShowMut.mutate(b.id, {
       onSuccess: () => {
         setShowNoShowSheet(false);
+        toast.success(
+          b.noShowChargeAmountUsd
+            ? `No-show recorded · $${b.noShowChargeAmountUsd} charged`
+            : 'No-show recorded',
+        );
         router.back();
       },
     });
@@ -146,7 +172,12 @@ export default function BookingDetailScreen() {
         {/* Actions */}
         <View className="flex-row gap-[10px] mt-xl">
           <View className="flex-1">
-            <Btn label="Message" full onPress={() => router.push(`/(app)/(tabs)/menu/clients/${b.client.id}/message`)} />
+            <Btn
+              label={startConvo.isPending ? 'Opening...' : 'Message'}
+              full
+              disabled={startConvo.isPending}
+              onPress={handleMessage}
+            />
           </View>
           {b.status === 'confirmed' && (
             <View className="flex-1">

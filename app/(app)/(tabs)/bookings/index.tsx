@@ -26,6 +26,7 @@ import {
   usePauseRecurring,
   useCancelRecurring,
 } from '@/lib/hooks/useRecurring';
+import { toast } from '@/lib/stores/toast';
 import type { BookingListItem } from '@/lib/api/bookings';
 import type { RecurringListItem } from '@/lib/api/recurring';
 
@@ -98,7 +99,12 @@ export default function BookingsScreen() {
 
   const confirmNoShow = () => {
     if (!noShowId) return;
-    noShowMut.mutate(noShowId, { onSuccess: () => setNoShowId(null) });
+    noShowMut.mutate(noShowId, {
+      onSuccess: () => {
+        setNoShowId(null);
+        toast.success('No-show recorded');
+      },
+    });
   };
 
   const noShowBooking = noShowId
@@ -345,7 +351,11 @@ function RecurringTab({
                       label="Cancel"
                       variant="danger"
                       full
-                      onPress={() => cancelMut.mutate(r.id)}
+                      onPress={() =>
+                        cancelMut.mutate(r.id, {
+                          onSuccess: () => toast.success('Recurring cancelled'),
+                        })
+                      }
                     />
                   </View>
                 </View>
@@ -363,7 +373,12 @@ function RecurringTab({
           if (!pausingId) return;
           pauseMut.mutate(
             { recurringId: pausingId, body },
-            { onSuccess: () => setPausingId(null) },
+            {
+              onSuccess: () => {
+                setPausingId(null);
+                toast.success('Recurring paused');
+              },
+            },
           );
         }}
         isPending={pauseMut.isPending}

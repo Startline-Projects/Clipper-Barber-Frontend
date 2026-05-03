@@ -11,10 +11,13 @@ import TypeBadge from "@/components/ui/TypeBadge";
 import Icon from "@/components/ui/Icon";
 import Divider from "@/components/ui/Divider";
 import Toggle from "@/components/ui/Toggle";
+import SetupAlerts from "@/components/ui/SetupAlerts";
 import { useColors } from "@/lib/theme/colors";
 import { useBookings, useConfirmBooking, useCancelBooking } from "@/lib/hooks/useBookings";
 import { useUnreadCount } from "@/lib/hooks/useNotifications";
 import { useAutoConfirm } from "@/lib/hooks/useAutoConfirm";
+import { useProfile } from "@/lib/hooks/useProfile";
+import { toast } from "@/lib/stores/toast";
 import type { BookingListItem } from "@/lib/api/bookings";
 
 const TYPE_BAR_COLORS: Record<string, string> = {
@@ -48,6 +51,7 @@ export default function TodayScreen() {
 	const cancel = useCancelBooking();
 	const unread = useUnreadCount();
 	const { allowAutoConfirm, autoConfirmToday, mutateAutoConfirm, mutateAutoConfirmToday } = useAutoConfirm();
+	const { data: profile } = useProfile();
 
 	const { data, isLoading, refetch } = useBookings({
 		timeframe: "upcoming",
@@ -85,6 +89,13 @@ export default function TodayScreen() {
 					}
 				/>
 
+				{/* Setup alerts */}
+				<SetupAlerts
+					stripeConnected={profile?.stripeConnected}
+					locationSet={profile?.locationSet}
+					className="mb-xl"
+				/>
+
 				{/* Stats */}
 				<View className="flex-row gap-[10px] mb-xl">
 					<StatCard value={allBookings.filter((b) => b.status !== "cancelled").length} label="Appointments" dark />
@@ -95,7 +106,20 @@ export default function TodayScreen() {
 				{pending.length > 0 && (
 					<Section title="Pending">
 						{pending.map((b) => (
-							<PendingCard key={b.id} booking={b} onAccept={() => confirm.mutate(b.id)} onDecline={() => cancel.mutate(b.id)} />
+							<PendingCard
+								key={b.id}
+								booking={b}
+								onAccept={() =>
+									confirm.mutate(b.id, {
+										onSuccess: () => toast.success("Booking confirmed"),
+									})
+								}
+								onDecline={() =>
+									cancel.mutate(b.id, {
+										onSuccess: () => toast.success("Booking declined"),
+									})
+								}
+							/>
 						))}
 					</Section>
 				)}

@@ -11,6 +11,7 @@ import {
   useOnboardConnect,
   useDisconnectConnect,
 } from '@/lib/hooks/useStripe';
+import { toast } from '@/lib/stores/toast';
 
 export default function PaymentsScreen() {
   const router = useRouter();
@@ -35,7 +36,10 @@ export default function PaymentsScreen() {
         {
           text: 'Disconnect',
           style: 'destructive',
-          onPress: () => disconnect.mutate(undefined),
+          onPress: () =>
+            disconnect.mutate(undefined, {
+              onSuccess: () => toast.success('Stripe disconnected'),
+            }),
         },
       ],
     );

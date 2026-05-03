@@ -1,7 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -18,6 +17,8 @@ import Icon from '@/components/ui/Icon';
 import { useColors } from '@/lib/theme/colors';
 import { useConversations } from '@/lib/hooks/useConversations';
 import { useMessages, useSendMessage } from '@/lib/hooks/useMessages';
+import { toast } from '@/lib/stores/toast';
+import { getReadableError } from '@/lib/utils/get-readable-error';
 import type { Message } from '@/lib/api/conversations';
 
 function formatMsgTime(iso: string) {
@@ -53,13 +54,7 @@ export default function ConversationScreen() {
     const trimmed = text.trim();
     if (!trimmed || sendMut.isPending) return;
     sendMut.mutate(trimmed, {
-      onError: (err: any) => {
-        const msg = err?.response?.data?.message
-          ?? err?.response?.data?.error
-          ?? err?.message
-          ?? JSON.stringify(err);
-        Alert.alert('Send failed', msg);
-      },
+      onError: (err) => toast.error(getReadableError(err)),
     });
     setText('');
   };

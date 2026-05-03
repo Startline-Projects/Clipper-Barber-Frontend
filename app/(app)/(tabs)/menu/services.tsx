@@ -28,6 +28,7 @@ import {
   useUpdateService,
   useToggleService,
 } from '@/lib/hooks/useServices';
+import { toast } from '@/lib/stores/toast';
 import type { Service, CreateServiceBody } from '@/lib/api/services';
 
 const SERVICE_TYPES = [
@@ -138,7 +139,14 @@ export default function ServicesScreen() {
                         setEditingService(s);
                         setEditorOpen(true);
                       }}
-                      onToggle={() => toggle.mutate(s.id)}
+                      onToggle={() =>
+                        toggle.mutate(s.id, {
+                          onSuccess: () =>
+                            toast.success(
+                              s.isActive ? 'Service paused' : 'Service activated',
+                            ),
+                        })
+                      }
                     />
                   ))}
                 </Card>
@@ -156,7 +164,14 @@ export default function ServicesScreen() {
                         setEditingService(s);
                         setEditorOpen(true);
                       }}
-                      onToggle={() => toggle.mutate(s.id)}
+                      onToggle={() =>
+                        toggle.mutate(s.id, {
+                          onSuccess: () =>
+                            toast.success(
+                              s.isActive ? 'Service paused' : 'Service activated',
+                            ),
+                        })
+                      }
                     />
                   ))}
                 </Card>

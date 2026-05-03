@@ -1,12 +1,30 @@
-import { QueryClient, focusManager, onlineManager } from '@tanstack/react-query';
+import {
+  MutationCache,
+  QueryClient,
+  focusManager,
+  onlineManager,
+} from '@tanstack/react-query';
 import { AppState, Platform } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
-import type { ApiError } from '@/lib/api/client'; // or wherever you exported it
+import type { ApiError } from '@/lib/api/client';
+import { toast } from '@/lib/stores/toast';
+import { getReadableError } from '@/lib/utils/get-readable-error';
 
 const STALE_TIME = 2 * 60 * 1000;
 const GC_TIME = 10 * 60 * 1000;
 
+// Catch mutation errors that don't define their own onError so the user always
+// gets feedback (no silent failures from optimistic-only updates).
+const mutationCache = new MutationCache({
+  onError: (error, _variables, _context, mutation) => {
+    const handled = mutation.options.onError !== undefined;
+    if (handled) return;
+    toast.error(getReadableError(error));
+  },
+});
+
 export const queryClient = new QueryClient({
+  mutationCache,
   defaultOptions: {
     queries: {
       staleTime: STALE_TIME,

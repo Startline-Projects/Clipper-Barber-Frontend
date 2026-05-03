@@ -1,6 +1,5 @@
 import { useRef, useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -15,6 +14,7 @@ import Header from '@/components/ui/Header';
 import Btn from '@/components/ui/Btn';
 import TextField from '@/components/forms/TextField';
 import { useChangePassword } from '@/lib/hooks/useAuth';
+import { toast } from '@/lib/stores/toast';
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -61,7 +61,7 @@ export default function ChangePasswordScreen() {
       { currentPassword: current, newPassword: newPw },
       {
         onSuccess: () => {
-          Alert.alert('Password changed', 'Your password has been updated.');
+          toast.success('Password changed');
           router.back();
         },
         onError: () =>

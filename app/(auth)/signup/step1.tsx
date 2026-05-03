@@ -1,6 +1,5 @@
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -9,7 +8,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Header from '@/components/ui/Header';
@@ -18,6 +17,7 @@ import TextField from '@/components/forms/TextField';
 import Icon from '@/components/ui/Icon';
 import { useSignupStep1 } from '@/lib/hooks/useAuth';
 import { useOnboardingStore } from '@/lib/stores/onboarding';
+import { toast } from '@/lib/stores/toast';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const NAME_RE = /^[a-zA-ZÀ-ɏЀ-ӿ؀-ۿ\s'\-\.]+$/;
@@ -26,10 +26,10 @@ const MIN_PASSWORD_LENGTH = 8;
 export default function SignupStep1Screen() {
   const router = useRouter();
   const signup = useSignupStep1();
-  const { draft, patchDraft } = useOnboardingStore();
+  const { patchDraft } = useOnboardingStore();
 
-  const [fullName, setFullName] = useState(draft.step1?.fullName ?? '');
-  const [email, setEmail] = useState(draft.step1?.email ?? '');
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [errors, setErrors] = useState<{
@@ -40,6 +40,19 @@ export default function SignupStep1Screen() {
 
   const emailRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        setFullName('');
+        setEmail('');
+        setPassword('');
+        setShowPw(false);
+        setErrors({});
+        patchDraft('step1', { fullName: '', email: '' });
+      };
+    }, [patchDraft]),
+  );
 
   const validate = () => {
     const e: typeof errors = {};
@@ -88,10 +101,7 @@ export default function SignupStep1Screen() {
               email: 'This email is already registered',
             }));
           } else {
-            Alert.alert(
-              'Sign up failed',
-              'Something went wrong. Please try again.',
-            );
+            toast.error('Sign up failed. Please try again.');
           }
         },
       },

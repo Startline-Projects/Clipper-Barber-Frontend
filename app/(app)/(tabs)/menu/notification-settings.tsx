@@ -10,6 +10,7 @@ import {
   useNotificationSettings,
   useUpdateNotificationSettings,
 } from '@/lib/hooks/useNotificationSettings';
+import { toast } from '@/lib/stores/toast';
 
 export default function NotificationSettingsScreen() {
   const router = useRouter();
@@ -31,7 +32,10 @@ export default function NotificationSettingsScreen() {
   }
 
   const toggle = (key: 'normal_bookings' | 'recurring_bookings') => {
-    update.mutate({ ...data, [key]: !data[key] });
+    update.mutate(
+      { ...data, [key]: !data[key] },
+      { onSuccess: () => toast.success('Notification settings updated') },
+    );
   };
 
   return (

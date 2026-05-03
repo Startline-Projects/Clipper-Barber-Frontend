@@ -7,6 +7,7 @@ import Card from "@/components/ui/Card";
 import Avatar from "@/components/ui/Avatar";
 import Icon from "@/components/ui/Icon";
 import ThemeToggle from "@/components/ui/ThemeToggle";
+import SetupAlerts from "@/components/ui/SetupAlerts";
 import { useColors } from "@/lib/theme/colors";
 import { useProfile } from "@/lib/hooks/useProfile";
 import { useReviewsAnalytics } from "@/lib/hooks/useReviews";
@@ -83,6 +84,13 @@ export default function MenuScreen() {
 						</Text>
 					</Pressable>
 				</Pressable>
+
+				{/* Setup alerts */}
+				<SetupAlerts
+					stripeConnected={profile?.stripeConnected}
+					locationSet={profile?.locationSet}
+					className="mb-4"
+				/>
 
 				{/* Appearance */}
 				<View className="mx-4 mb-4 bg-gray-50 dark:bg-gray-900 bg-white rounded-2xl overflow-hidden">

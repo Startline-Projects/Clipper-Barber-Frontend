@@ -1,4 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
+import { logger } from '@/lib/utils/logger';
 
 const KEYS = {
   accessToken: 'clipper_access_token',
@@ -15,7 +16,7 @@ export async function getToken(key: TokenKey): Promise<string | null> {
   try {
     return await SecureStore.getItemAsync(KEYS[key], OPTIONS);
   } catch (err) {
-    console.warn(`[secureStore] failed to read ${key}:`, err);
+    logger.warn(`[secureStore] failed to read ${key}:`, err);
     return null;
   }
 }
@@ -28,7 +29,7 @@ export async function deleteToken(key: TokenKey): Promise<void> {
   try {
     await SecureStore.deleteItemAsync(KEYS[key], OPTIONS);
   } catch (err) {
-    console.warn(`[secureStore] failed to delete ${key}:`, err);
+    logger.warn(`[secureStore] failed to delete ${key}:`, err);
   }
 }
 

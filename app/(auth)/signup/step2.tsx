@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   Text,
   TextInput,
@@ -13,10 +13,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '@/components/ui/Header';
 import Btn from '@/components/ui/Btn';
 import TextField from '@/components/forms/TextField';
-import Icon from '@/components/ui/Icon';
-import { useColors } from '@/lib/theme/colors';
+import AddressAutocomplete from '@/components/forms/AddressAutocomplete';
+import LocationPicker from '@/components/forms/LocationPicker';
 import { useSignupStep2 } from '@/lib/hooks/useAuth';
 import { useOnboardingStore } from '@/lib/stores/onboarding';
+import { toast } from '@/lib/stores/toast';
+import type { AddressParts } from '@/lib/api/places';
 
 const PHONE_RE = /^\+?[\d\s\-().]{7,20}$/;
 const ZIP_RE = /^\d{5}(-\d{4})?$/;
@@ -24,9 +26,13 @@ const NAME_RE = /^[a-zA-ZÀ-ɏ\s'\-\.0-9&]+$/;
 
 export default function SignupStep2Screen() {
   const router = useRouter();
-  const colors = useColors();
   const signup = useSignupStep2();
-  const { draft, patchDraft } = useOnboardingStore();
+  const { draft, patchDraft, clearDraft } = useOnboardingStore();
+
+  const handleSkip = () => {
+    clearDraft();
+    router.replace('/(app)/(tabs)/today');
+  };
 
   const [shopName, setShopName] = useState(draft.step2?.shopName ?? '');
   const [phone, setPhone] = useState(draft.step2?.phone ?? '');
@@ -36,6 +42,12 @@ export default function SignupStep2Screen() {
   const [city, setCity] = useState(draft.step2?.city ?? '');
   const [state, setState] = useState(draft.step2?.state ?? '');
   const [zipCode, setZipCode] = useState(draft.step2?.zipCode ?? '');
+  const [latitude, setLatitude] = useState<number | null>(
+    draft.step2?.latitude ?? null,
+  );
+  const [longitude, setLongitude] = useState<number | null>(
+    draft.step2?.longitude ?? null,
+  );
   const [errors, setErrors] = useState<{
     shopName?: string;
     phone?: string;
@@ -43,7 +55,25 @@ export default function SignupStep2Screen() {
     city?: string;
     state?: string;
     zipCode?: string;
+    location?: string;
   }>({});
+
+  const applyAddressParts = (parts: AddressParts) => {
+    if (parts.streetAddress) setStreetAddress(parts.streetAddress);
+    if (parts.city) setCity(parts.city);
+    if (parts.state) setState(parts.state);
+    if (parts.zipCode) setZipCode(parts.zipCode);
+    setLatitude(parts.latitude);
+    setLongitude(parts.longitude);
+    setErrors((e) => ({
+      ...e,
+      streetAddress: undefined,
+      city: undefined,
+      state: undefined,
+      zipCode: undefined,
+      location: undefined,
+    }));
+  };
 
   const phoneRef = useRef<TextInput>(null);
   const addressRef = useRef<TextInput>(null);
@@ -89,6 +119,10 @@ export default function SignupStep2Screen() {
     if (!trimZip) e.zipCode = 'ZIP code is required';
     else if (!ZIP_RE.test(trimZip)) e.zipCode = 'Enter a valid ZIP code';
 
+    if (latitude === null || longitude === null) {
+      e.location = 'Pin your shop on the map';
+    }
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -99,7 +133,9 @@ export default function SignupStep2Screen() {
     streetAddress.trim().length > 0 &&
     city.trim().length > 0 &&
     state.trim().length > 0 &&
-    zipCode.trim().length > 0;
+    zipCode.trim().length > 0 &&
+    latitude !== null &&
+    longitude !== null;
 
   const handleContinue = () => {
     if (signup.isPending) return;
@@ -112,19 +148,15 @@ export default function SignupStep2Screen() {
       city: city.trim(),
       state: state.trim().toUpperCase(),
       zipCode: zipCode.trim(),
-      latitude: 0,
-      longitude: 0,
+      latitude: latitude as number,
+      longitude: longitude as number,
     };
 
     patchDraft('step2', body);
 
     signup.mutate(body, {
       onSuccess: () => router.push('/(auth)/signup/step3'),
-      onError: () =>
-        Alert.alert(
-          'Save failed',
-          'Something went wrong. Please try again.',
-        ),
+      onError: () => toast.error('Save failed. Please try again.'),
     });
   };
 
@@ -138,7 +170,17 @@ export default function SignupStep2Screen() {
           className="flex-1 px-5"
           keyboardShouldPersistTaps="handled"
         >
-          <Header title="" onBack={() => router.back()} />
+          <Header
+            title=""
+            onBack={() => router.back()}
+            right={
+              <Pressable onPress={handleSkip} hitSlop={8}>
+                <Text className="text-[14px] font-semibold text-tertiary tracking-[-0.1px]">
+                  Skip
+                </Text>
+              </Pressable>
+            }
+          />
 
           {/* Progress bar */}
           <View className="flex-row gap-[6px] mb-2 mt-2">
@@ -199,7 +241,7 @@ export default function SignupStep2Screen() {
           </View>
 
           <View className="mb-4">
-            <TextField
+            <AddressAutocomplete
               ref={addressRef}
               label="Street Address"
               value={streetAddress}
@@ -207,13 +249,10 @@ export default function SignupStep2Screen() {
                 setStreetAddress(t);
                 clearError('streetAddress');
               }}
+              onPlaceSelected={applyAddressParts}
               placeholder="123 Main Street"
-              autoCapitalize="words"
-              autoComplete="street-address"
-              textContentType="streetAddressLine1"
               returnKeyType="next"
               onSubmitEditing={() => cityRef.current?.focus()}
-              blurOnSubmit={false}
               error={errors.streetAddress}
             />
           </View>
@@ -275,7 +314,7 @@ export default function SignupStep2Screen() {
             />
           </View>
 
-          {/* Map placeholder */}
+          {/* Map picker */}
           <Text className="text-[13px] font-semibold text-secondary tracking-[-0.1px] mb-[6px]">
             Pin your shop on the map
           </Text>
@@ -283,12 +322,21 @@ export default function SignupStep2Screen() {
             Drop a pin so clients see exact directions. We'll save the lat/lng
             with your address.
           </Text>
-          <View className="w-full h-[168px] rounded-md overflow-hidden border-[1.5px] border-separator-opaque mb-[10px] bg-separator-opaque items-center justify-center">
-            <Icon name="location" size={32} color={colors.red} />
-            <Text className="text-[12px] text-tertiary mt-2 tracking-[-0.1px]">
-              Map coming soon
+          <LocationPicker
+            latitude={latitude}
+            longitude={longitude}
+            onChange={(lat, lng, parts) => {
+              setLatitude(lat);
+              setLongitude(lng);
+              if (parts) applyAddressParts(parts);
+              clearError('streetAddress');
+            }}
+          />
+          {errors.location && (
+            <Text className="text-[12px] text-red mt-1 tracking-[-0.1px]">
+              {errors.location}
             </Text>
-          </View>
+          )}
 
           <View className="flex-row gap-3 mt-2 mb-8">
             <View className="flex-1">

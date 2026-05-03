@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import {
-  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -19,6 +18,7 @@ import Icon from '@/components/ui/Icon';
 import { useColors } from '@/lib/theme/colors';
 import { useSignupStep3 } from '@/lib/hooks/useAuth';
 import { useOnboardingStore } from '@/lib/stores/onboarding';
+import { toast } from '@/lib/stores/toast';
 import type { RNFile } from '@/lib/api/auth';
 
 const IG_RE = /^@?[a-zA-Z0-9._]{1,30}$/;
@@ -60,6 +60,11 @@ export default function SignupStep3Screen() {
 
   const removePhoto = () => setPhoto(null);
 
+  const handleSkip = () => {
+    clearDraft();
+    router.replace('/(app)/(tabs)/today');
+  };
+
   const validate = () => {
     const e: typeof errors = {};
     const trimBio = bio.trim();
@@ -96,11 +101,7 @@ export default function SignupStep3Screen() {
           clearDraft();
           router.replace('/(app)/(tabs)/today');
         },
-        onError: () =>
-          Alert.alert(
-            'Save failed',
-            'Something went wrong. Please try again.',
-          ),
+        onError: () => toast.error('Save failed. Please try again.'),
       },
     );
   };
@@ -115,7 +116,17 @@ export default function SignupStep3Screen() {
           className="flex-1 px-5"
           keyboardShouldPersistTaps="handled"
         >
-          <Header title="" onBack={() => router.back()} />
+          <Header
+            title=""
+            onBack={() => router.back()}
+            right={
+              <Pressable onPress={handleSkip} hitSlop={8}>
+                <Text className="text-[14px] font-semibold text-tertiary tracking-[-0.1px]">
+                  Skip
+                </Text>
+              </Pressable>
+            }
+          />
 
           {/* Progress bar */}
           <View className="flex-row gap-[6px] mb-2 mt-2">

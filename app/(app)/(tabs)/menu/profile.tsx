@@ -18,11 +18,16 @@ import Header from '@/components/ui/Header';
 import Section from '@/components/ui/Section';
 import Btn from '@/components/ui/Btn';
 import TextField from '@/components/forms/TextField';
+import AddressAutocomplete from '@/components/forms/AddressAutocomplete';
+import LocationPicker from '@/components/forms/LocationPicker';
 import Avatar from '@/components/ui/Avatar';
 import Icon from '@/components/ui/Icon';
 import { useColors } from '@/lib/theme/colors';
 import { useProfile, useUpdateProfile } from '@/lib/hooks/useProfile';
+import { getReadableError } from '@/lib/utils/get-readable-error';
+import { toast } from '@/lib/stores/toast';
 import type { RNFile } from '@/lib/api/auth';
+import type { AddressParts } from '@/lib/api/places';
 
 const NAME_RE = /^[a-zA-ZÀ-ɏЀ-ӿ؀-ۿ\s'\-\.]+$/;
 const SHOP_NAME_RE = /^[a-zA-ZÀ-ɏ\s'\-\.0-9&]+$/;
@@ -47,6 +52,7 @@ type FieldErrors = {
   city?: string;
   state?: string;
   zipCode?: string;
+  location?: string;
   bio?: string;
   instagram?: string;
 };
@@ -64,6 +70,8 @@ export default function ProfileScreen() {
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [zipCode, setZipCode] = useState('');
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
   const [bio, setBio] = useState('');
   const [instagram, setInstagram] = useState('');
   const [photo, setPhoto] = useState<RNFile | null>(null);
@@ -86,6 +94,8 @@ export default function ProfileScreen() {
     setCity(profile.city ?? '');
     setState(profile.state ?? '');
     setZipCode(profile.zip_code ?? '');
+    setLatitude(profile.latitude);
+    setLongitude(profile.longitude);
     setBio(profile.bio ?? '');
     setInstagram(profile.instagram_handle ?? '');
     setHydrated(true);
@@ -111,12 +121,8 @@ export default function ProfileScreen() {
           <Header title="Edit Profile" onBack={() => router.back()} />
         </View>
         <View className="flex-1 items-center justify-center px-8">
-          <Text className="text-[15px] text-tertiary text-center mb-2">
-            Could not load profile
-          </Text>
-          {/* DEBUG: remove this error text once loading issue is resolved */}
-          <Text className="text-[12px] text-quaternary text-center mb-4" selectable>
-            {error instanceof Error ? error.message : JSON.stringify(error)}
+          <Text className="text-[15px] text-tertiary text-center mb-4">
+            {getReadableError(error)}
           </Text>
           <Pressable onPress={() => refetch()}>
             <Text className="text-[14px] font-semibold text-blue">Retry</Text>
@@ -134,12 +140,31 @@ export default function ProfileScreen() {
     city !== (profile.city ?? '') ||
     state !== (profile.state ?? '') ||
     zipCode !== (profile.zip_code ?? '') ||
+    latitude !== profile.latitude ||
+    longitude !== profile.longitude ||
     bio !== (profile.bio ?? '') ||
     instagram !== (profile.instagram_handle ?? '') ||
     photo !== null;
 
   const clearError = (field: keyof FieldErrors) => {
     if (errors[field]) setErrors((e) => ({ ...e, [field]: undefined }));
+  };
+
+  const applyAddressParts = (parts: AddressParts) => {
+    if (parts.streetAddress) setStreetAddress(parts.streetAddress);
+    if (parts.city) setCity(parts.city);
+    if (parts.state) setState(parts.state);
+    if (parts.zipCode) setZipCode(parts.zipCode);
+    setLatitude(parts.latitude);
+    setLongitude(parts.longitude);
+    setErrors((e) => ({
+      ...e,
+      streetAddress: undefined,
+      city: undefined,
+      state: undefined,
+      zipCode: undefined,
+      location: undefined,
+    }));
   };
 
   const validate = () => {
@@ -178,6 +203,10 @@ export default function ProfileScreen() {
     if (!trimZip) e.zipCode = 'ZIP code is required';
     else if (!ZIP_RE.test(trimZip)) e.zipCode = 'Enter a valid ZIP code';
 
+    if (latitude === null || longitude === null) {
+      e.location = 'Pin your shop on the map';
+    }
+
     if (trimBio.length > 300) e.bio = 'Bio must be under 300 characters';
 
     if (trimIg && !IG_RE.test(trimIg)) e.instagram = 'Enter a valid Instagram handle';
@@ -198,11 +227,18 @@ export default function ProfileScreen() {
         city: city.trim(),
         state: state.trim().toUpperCase(),
         zipCode: zipCode.trim(),
+        latitude: latitude as number,
+        longitude: longitude as number,
         bio: bio.trim() || undefined,
         instagramHandle: instagram.trim().replace(/^@/, '') || undefined,
         photo: photo ?? undefined,
       },
-      { onSuccess: () => router.back() },
+      {
+        onSuccess: () => {
+          toast.success('Profile saved');
+          router.back();
+        },
+      },
     );
   };
 
@@ -331,16 +367,15 @@ export default function ProfileScreen() {
 
           <Section title="Location">
             <View className="mb-4">
-              <TextField
+              <AddressAutocomplete
                 ref={addrRef}
                 label="Street Address"
                 value={streetAddress}
                 onChangeText={(t) => { setStreetAddress(t); clearError('streetAddress'); }}
+                onPlaceSelected={applyAddressParts}
                 placeholder="123 Main Street"
-                autoCapitalize="words"
                 returnKeyType="next"
                 onSubmitEditing={() => cityRef.current?.focus()}
-                blurOnSubmit={false}
                 error={errors.streetAddress}
               />
             </View>
@@ -385,11 +420,24 @@ export default function ProfileScreen() {
               />
             </View>
 
-            {/* Map placeholder */}
-            <View className="w-full h-[184px] rounded-md overflow-hidden border-[1.5px] border-separator-opaque mb-4 bg-separator-opaque items-center justify-center">
-              <Icon name="location" size={36} color={colors.red} />
-              <Text className="text-[12px] text-tertiary mt-2">Map coming soon</Text>
-            </View>
+            <Text className="text-[13px] font-semibold text-secondary tracking-[-0.1px] mb-[6px]">
+              Pin your shop on the map
+            </Text>
+            <LocationPicker
+              latitude={latitude}
+              longitude={longitude}
+              onChange={(lat, lng, parts) => {
+                setLatitude(lat);
+                setLongitude(lng);
+                if (parts) applyAddressParts(parts);
+                clearError('location');
+              }}
+            />
+            {errors.location && (
+              <Text className="text-[12px] text-red mt-1 mb-2 tracking-[-0.1px]">
+                {errors.location}
+              </Text>
+            )}
           </Section>
 
           <Section title="About">

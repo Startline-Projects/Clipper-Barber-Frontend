@@ -28,6 +28,8 @@ import {
   useResumeRecurring,
   useCancelRecurring,
 } from '@/lib/hooks/useRecurring';
+import { toast } from '@/lib/stores/toast';
+import { getReadableError } from '@/lib/utils/get-readable-error';
 
 const DAY_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -70,11 +72,8 @@ export default function RecurringDetailScreen() {
           <Header title="Recurring" onBack={() => router.back()} />
         </View>
         <View className="flex-1 items-center justify-center px-8">
-          <Text className="text-[15px] text-tertiary text-center mb-2">
-            Could not load details
-          </Text>
-          <Text className="text-[12px] text-quaternary text-center" selectable>
-            {error instanceof Error ? error.message : JSON.stringify(error)}
+          <Text className="text-[15px] text-tertiary text-center">
+            {getReadableError(error)}
           </Text>
         </View>
       </SafeAreaView>
@@ -87,7 +86,12 @@ export default function RecurringDetailScreen() {
   const isPaused = r.status === 'paused';
 
   const handleAccept = () => {
-    accept.mutate(r.id, { onSuccess: () => router.back() });
+    accept.mutate(r.id, {
+      onSuccess: () => {
+        toast.success('Recurring accepted');
+        router.back();
+      },
+    });
   };
 
   const handleDecline = () => {
@@ -99,7 +103,12 @@ export default function RecurringDetailScreen() {
         onPress: () =>
           decline.mutate(
             { recurringId: r.id },
-            { onSuccess: () => router.back() },
+            {
+              onSuccess: () => {
+                toast.success('Recurring declined');
+                router.back();
+              },
+            },
           ),
       },
     ]);
@@ -113,13 +122,21 @@ export default function RecurringDetailScreen() {
         body: { pauseStartDate: now.toISOString() },
       },
       {
-        onSuccess: () => setPauseDrawer(false),
+        onSuccess: () => {
+          setPauseDrawer(false);
+          toast.success('Recurring paused');
+        },
       },
     );
   };
 
   const handleResume = () => {
-    resume.mutate(r.id);
+    resume.mutate(r.id, {
+      onSuccess: () => {
+        toast.success('Recurring resumed');
+        router.back();
+      },
+    });
   };
 
   const handleCancel = () => {
@@ -132,7 +149,12 @@ export default function RecurringDetailScreen() {
           text: 'Cancel it',
           style: 'destructive',
           onPress: () =>
-            cancel.mutate(r.id, { onSuccess: () => router.back() }),
+            cancel.mutate(r.id, {
+              onSuccess: () => {
+                toast.success('Recurring cancelled');
+                router.back();
+              },
+            }),
         },
       ],
     );

@@ -1,6 +1,5 @@
 import { useRef, useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -17,6 +16,7 @@ import TextField from '@/components/forms/TextField';
 import Icon from '@/components/ui/Icon';
 import { useColors } from '@/lib/theme/colors';
 import { useResetPassword } from '@/lib/hooks/useAuth';
+import { toast } from '@/lib/stores/toast';
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -82,17 +82,7 @@ export default function ResetPasswordScreen() {
       {
         onSuccess: () => setSuccess(true),
         onError: () =>
-          Alert.alert(
-            'Reset failed',
-            'This link may have expired or already been used. Please request a new one.',
-            [
-              { text: 'Cancel', style: 'cancel' },
-              {
-                text: 'Request new link',
-                onPress: () => router.replace('/(auth)/forgot-password'),
-              },
-            ],
-          ),
+          toast.error('Reset link has expired. Please request a new one.'),
       },
     );
   };

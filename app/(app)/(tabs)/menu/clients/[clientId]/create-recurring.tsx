@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -20,6 +19,7 @@ import TimeSelect, { generateTimeSlots } from '@/components/forms/TimeSelect';
 import { useColors } from '@/lib/theme/colors';
 import { useServices } from '@/lib/hooks/useServices';
 import { useClientDetail } from '@/lib/hooks/useClients';
+import { toast } from '@/lib/stores/toast';
 import type { Service } from '@/lib/api/services';
 
 const DAY_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -51,9 +51,8 @@ export default function CreateRecurringScreen() {
 
   const handleCreate = () => {
     if (!canSubmit) return;
-    Alert.alert(
-      'Coming Soon',
-      'Creating recurring arrangements from the barber side will be available in a future update.',
+    toast.info(
+      'Creating recurring arrangements from the barber side is coming soon.',
     );
   };
 

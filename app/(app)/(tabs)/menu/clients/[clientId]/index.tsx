@@ -1,4 +1,4 @@
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "@/components/ui/Header";
@@ -13,6 +13,8 @@ import Btn from "@/components/ui/Btn";
 import { useColors } from "@/lib/theme/colors";
 import { useClientDetail } from "@/lib/hooks/useClients";
 import { useStartConversation } from "@/lib/hooks/useConversations";
+import { toast } from "@/lib/stores/toast";
+import { getReadableError } from "@/lib/utils/get-readable-error";
 import type { ClientBooking, ClientRecurring } from "@/lib/api/clients";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -46,10 +48,7 @@ export default function ClientDetailScreen() {
 			onSuccess: (convo) => {
 				router.push(`/(app)/(tabs)/messages/${convo.id}`);
 			},
-			onError: (err: any) => {
-				const msg = err?.response?.data?.message ?? err?.response?.data?.error ?? err?.message ?? "Could not open conversation";
-				Alert.alert("Message failed", msg);
-			},
+			onError: (err) => toast.error(getReadableError(err)),
 		});
 	};
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "@/components/ui/Header";
@@ -10,6 +10,8 @@ import Icon from "@/components/ui/Icon";
 import TimeSelect, { generateTimeSlots, formatTime12 } from "@/components/forms/TimeSelect";
 import { useColors } from "@/lib/theme/colors";
 import { useSchedule, useUpdateScheduleDay } from "@/lib/hooks/useSchedule";
+import { toast } from "@/lib/stores/toast";
+import { getReadableError } from "@/lib/utils/get-readable-error";
 import type { ScheduleDay, DayOfWeek, UpdateScheduleDayBody } from "@/lib/api/schedule";
 
 const DAY_LABELS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -59,10 +61,7 @@ export default function ScheduleScreen() {
 					<Header title="Schedule" onBack={() => router.back()} />
 				</View>
 				<View className="flex-1 items-center justify-center px-8">
-					<Text className="text-[15px] text-tertiary text-center mb-2">Could not load schedule</Text>
-					<Text className="text-[12px] text-quaternary text-center mb-4" selectable>
-						{error instanceof Error ? error.message : JSON.stringify(error)}
-					</Text>
+					<Text className="text-[15px] text-tertiary text-center mb-4">{getReadableError(error)}</Text>
 					<Pressable onPress={() => refetch()}>
 						<Text className="text-[14px] font-semibold text-blue">Retry</Text>
 					</Pressable>
@@ -100,8 +99,9 @@ export default function ScheduleScreen() {
 		setDrafts(failed);
 		setSaving(false);
 		if (firstError) {
-			const msg = (firstError as { message?: string })?.message ?? "Something went wrong. Please try again.";
-			Alert.alert("Schedule update failed", msg);
+			toast.error(getReadableError(firstError));
+		} else {
+			toast.success("Schedule updated");
 		}
 	};
 
@@ -110,27 +110,27 @@ export default function ScheduleScreen() {
 		const field = timePicker.field;
 
 		if (field === "regularStartTime" && dDay.regularEndTime && time >= dDay.regularEndTime) {
-			Alert.alert("Invalid time", "Start time must be before end time.");
+			toast.error("Start time must be before end time.");
 			return;
 		}
 		if (field === "regularEndTime" && dDay.regularStartTime && time <= dDay.regularStartTime) {
-			Alert.alert("Invalid time", "End time must be after start time.");
+			toast.error("End time must be after start time.");
 			return;
 		}
 		if (field === "afterHoursStart" && dDay.regularEndTime && time < dDay.regularEndTime) {
-			Alert.alert("Invalid time", "After-hours start must be at or after regular end time.");
+			toast.error("After-hours start must be at or after regular end time.");
 			return;
 		}
 		if (field === "afterHoursEnd" && dDay.afterHoursStart && time <= dDay.afterHoursStart) {
-			Alert.alert("Invalid time", "After-hours end must be after start time.");
+			toast.error("After-hours end must be after start time.");
 			return;
 		}
 		if (field === "dayOffStartTime" && dDay.dayOffEndTime && time >= dDay.dayOffEndTime) {
-			Alert.alert("Invalid time", "Start time must be before end time.");
+			toast.error("Start time must be before end time.");
 			return;
 		}
 		if (field === "dayOffEndTime" && dDay.dayOffStartTime && time <= dDay.dayOffStartTime) {
-			Alert.alert("Invalid time", "End time must be after start time.");
+			toast.error("End time must be after start time.");
 			return;
 		}
 

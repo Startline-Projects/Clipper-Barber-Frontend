@@ -5,11 +5,13 @@ import { Slot, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/utils/query-client';
 import { useAuthStore } from '@/lib/stores/auth.store';
 import { useTheme } from '@/lib/hooks/useTheme';
 import { useThemeHasHydrated } from '@/lib/stores/theme';
+import ToastHost from '@/components/feedback/Toast';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -26,10 +28,13 @@ function AuthRedirect() {
     if (!isHydrated) return;
 
     const inAuth = segments[0] === '(auth)';
+    // Signup is a multi-step flow that issues a token at step1; keep the
+    // barber inside it until they finish or skip the remaining steps.
+    const inSignup = inAuth && segments[1] === 'signup';
 
     if (!accessToken && !inAuth) {
       router.replace(hasLaunched ? '/(auth)/login' : '/(auth)/welcome');
-    } else if (accessToken && inAuth) {
+    } else if (accessToken && inAuth && !inSignup) {
       router.replace('/(app)/(tabs)/today');
     }
   }, [accessToken, hasLaunched, isHydrated, segments]);
@@ -45,6 +50,7 @@ function RootInner() {
       <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
       <AuthRedirect />
       <Slot />
+      <ToastHost />
     </View>
   );
 }
@@ -67,9 +73,11 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView className="flex-1">
-      <QueryClientProvider client={queryClient}>
-        <RootInner />
-      </QueryClientProvider>
+      <SafeAreaProvider>
+        <QueryClientProvider client={queryClient}>
+          <RootInner />
+        </QueryClientProvider>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }
