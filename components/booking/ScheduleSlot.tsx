@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { vars } from 'nativewind';
 import Icon from '@/components/ui/Icon';
@@ -20,7 +21,7 @@ const barColor: Record<string, string> = {
   day_off: '#BF5AF2',
 };
 
-export default function ScheduleSlot({
+export default memo(function ScheduleSlot({
   clientName,
   serviceName,
   time,
@@ -76,4 +77,4 @@ export default function ScheduleSlot({
       </Text>
     </Pressable>
   );
-}
+});

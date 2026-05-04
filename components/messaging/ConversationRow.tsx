@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Avatar from '@/components/ui/Avatar';
 import Icon from '@/components/ui/Icon';
@@ -12,7 +13,7 @@ interface ConversationRowProps {
   onPress?: () => void;
 }
 
-export default function ConversationRow({
+export default memo(function ConversationRow({
   clientName,
   lastMessage,
   time,
@@ -63,4 +64,4 @@ export default function ConversationRow({
       <Icon name="chevron" size={16} color={colors.quaternary} />
     </Pressable>
   );
-}
+});

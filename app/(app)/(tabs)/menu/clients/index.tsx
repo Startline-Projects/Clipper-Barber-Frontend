@@ -100,6 +100,11 @@ export default function ClientsScreen() {
         data={clients}
         keyExtractor={(c) => c.clientId}
         contentContainerClassName="px-5 pb-8"
+        removeClippedSubviews={true}
+        initialNumToRender={15}
+        maxToRenderPerBatch={8}
+        windowSize={5}
+        updateCellsBatchingPeriod={50}
         onEndReached={() => {
           if (hasNextPage && !isFetchingNextPage) fetchNextPage();
         }}

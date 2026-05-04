@@ -29,6 +29,19 @@ import {
 import { toast } from '@/lib/stores/toast';
 import type { BookingListItem } from '@/lib/api/bookings';
 import type { RecurringListItem } from '@/lib/api/recurring';
+import type { ErrorBoundaryProps } from 'expo-router';
+
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  return (
+    <View className="flex-1 items-center justify-center gap-4 p-6 bg-bg">
+      <Text className="text-[16px] font-semibold text-ink">Something went wrong</Text>
+      <Text className="text-[14px] text-secondary text-center">{error.message}</Text>
+      <Pressable onPress={retry} className="px-6 py-3 bg-blue rounded-sm">
+        <Text className="text-white font-semibold">Try again</Text>
+      </Pressable>
+    </View>
+  );
+}
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const TYPE_FILTER_MAP: Record<string, string> = {
@@ -142,6 +155,11 @@ export default function BookingsScreen() {
             data={filteredBookings}
             keyExtractor={(b) => b.id}
             contentContainerClassName="px-5"
+            removeClippedSubviews={true}
+            initialNumToRender={10}
+            maxToRenderPerBatch={5}
+            windowSize={5}
+            updateCellsBatchingPeriod={50}
             onEndReached={() => {
               if (bookingsQuery.hasNextPage && !bookingsQuery.isFetchingNextPage)
                 bookingsQuery.fetchNextPage();

@@ -1,4 +1,4 @@
-import { forwardRef, useCallback } from 'react';
+import { forwardRef, useCallback, useMemo } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import Icon from '@/components/ui/Icon';
@@ -13,6 +13,7 @@ interface NoShowConfirmSheetProps {
 const NoShowConfirmSheet = forwardRef<BottomSheet, NoShowConfirmSheetProps>(
   function NoShowConfirmSheet({ fee, onConfirm, onCancel }, ref) {
     const colors = useColors();
+    const snapPoints = useMemo(() => ['35%'], []);
 
     const handleSheetChanges = useCallback(
       (index: number) => {
@@ -25,8 +26,8 @@ const NoShowConfirmSheet = forwardRef<BottomSheet, NoShowConfirmSheetProps>(
       <BottomSheet
         ref={ref}
         index={-1}
+        snapPoints={snapPoints}
         enablePanDownToClose
-        enableDynamicSizing
         onChange={handleSheetChanges}
         backgroundStyle={{ backgroundColor: colors.card }}
         handleIndicatorStyle={{ backgroundColor: colors.quaternary }}

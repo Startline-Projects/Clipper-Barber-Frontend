@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Card from '@/components/ui/Card';
 import Avatar from '@/components/ui/Avatar';
@@ -16,7 +17,7 @@ interface BookingCardProps {
   onPress?: () => void;
 }
 
-export default function BookingCard({
+export default memo(function BookingCard({
   clientName,
   serviceName,
   time,
@@ -59,4 +60,4 @@ export default function BookingCard({
       </View>
     </Card>
   );
-}
+});

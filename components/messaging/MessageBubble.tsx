@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Text, View } from 'react-native';
 
 interface MessageBubbleProps {
@@ -6,7 +7,7 @@ interface MessageBubbleProps {
   isBarber: boolean;
 }
 
-export default function MessageBubble({
+export default memo(function MessageBubble({
   body,
   time,
   isBarber,
@@ -41,4 +42,4 @@ export default function MessageBubble({
       </View>
     </View>
   );
-}
+});

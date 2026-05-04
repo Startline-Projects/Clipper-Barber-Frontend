@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "@/components/ui/Header";
@@ -19,6 +19,20 @@ import { useAutoConfirm } from "@/lib/hooks/useAutoConfirm";
 import { useProfile } from "@/lib/hooks/useProfile";
 import { toast } from "@/lib/stores/toast";
 import type { BookingListItem } from "@/lib/api/bookings";
+import type { ErrorBoundaryProps } from 'expo-router';
+import { SkeletonBookingCard } from "@/components/feedback/Skeleton";
+
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  return (
+    <View className="flex-1 items-center justify-center gap-4 p-6 bg-bg">
+      <Text className="text-[16px] font-semibold text-ink">Something went wrong</Text>
+      <Text className="text-[14px] text-secondary text-center">{error.message}</Text>
+      <Pressable onPress={retry} className="px-6 py-3 bg-blue rounded-sm">
+        <Text className="text-white font-semibold">Try again</Text>
+      </Pressable>
+    </View>
+  );
+}
 
 const TYPE_BAR_COLORS: Record<string, string> = {
 	regular: "#30D158",
@@ -68,8 +82,8 @@ export default function TodayScreen() {
 	if (isLoading) {
 		return (
 			<SafeAreaView className="flex-1 bg-bg" edges={["top"]}>
-				<View className="flex-1 items-center justify-center">
-					<ActivityIndicator color={colors.tertiary} />
+				<View className="px-5 pt-4 gap-3">
+					{[1, 2, 3, 4].map((i) => <SkeletonBookingCard key={i} />)}
 				</View>
 			</SafeAreaView>
 		);

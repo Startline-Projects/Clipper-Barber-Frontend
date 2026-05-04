@@ -20,6 +20,19 @@ import { useMessages, useSendMessage } from '@/lib/hooks/useMessages';
 import { toast } from '@/lib/stores/toast';
 import { getReadableError } from '@/lib/utils/get-readable-error';
 import type { Message } from '@/lib/api/conversations';
+import type { ErrorBoundaryProps } from 'expo-router';
+
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  return (
+    <View className="flex-1 items-center justify-center gap-4 p-6 bg-bg">
+      <Text className="text-[16px] font-semibold text-ink">Something went wrong</Text>
+      <Text className="text-[14px] text-secondary text-center">{error.message}</Text>
+      <Pressable onPress={retry} className="px-6 py-3 bg-blue rounded-sm">
+        <Text className="text-white font-semibold">Try again</Text>
+      </Pressable>
+    </View>
+  );
+}
 
 function formatMsgTime(iso: string) {
   const d = new Date(iso);
@@ -88,6 +101,11 @@ export default function ConversationScreen() {
             keyExtractor={(m) => m.id}
             inverted
             contentContainerClassName="px-5 py-2"
+            removeClippedSubviews={true}
+            initialNumToRender={20}
+            maxToRenderPerBatch={10}
+            windowSize={7}
+            updateCellsBatchingPeriod={50}
             onEndReached={() => {
               if (hasNextPage && !isFetchingNextPage) fetchNextPage();
             }}

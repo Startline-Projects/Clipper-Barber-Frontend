@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useState } from 'react';
+import { forwardRef, useCallback, useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import Icon from '@/components/ui/Icon';
@@ -26,6 +26,7 @@ function addDays(days: number): string {
 const PauseRecurringSheet = forwardRef<BottomSheet, PauseRecurringSheetProps>(
   function PauseRecurringSheet({ clientName, onPause, onCancel }, ref) {
     const colors = useColors();
+    const snapPoints = useMemo(() => ['55%'], []);
     const [selected, setSelected] = useState(0);
 
     const handleSheetChanges = useCallback(
@@ -44,8 +45,8 @@ const PauseRecurringSheet = forwardRef<BottomSheet, PauseRecurringSheetProps>(
       <BottomSheet
         ref={ref}
         index={-1}
+        snapPoints={snapPoints}
         enablePanDownToClose
-        enableDynamicSizing
         onChange={handleSheetChanges}
         backgroundStyle={{ backgroundColor: colors.card }}
         handleIndicatorStyle={{ backgroundColor: colors.quaternary }}

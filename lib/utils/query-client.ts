@@ -29,6 +29,7 @@ export const queryClient = new QueryClient({
     queries: {
       staleTime: STALE_TIME,
       gcTime: GC_TIME,
+      refetchOnWindowFocus: false,
       retry: (failureCount, error) => {
         const apiError = error as Partial<ApiError>;
         // Don't retry client errors (4xx) — they won't get better

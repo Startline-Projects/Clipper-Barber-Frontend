@@ -106,6 +106,11 @@ export default function MessagesScreen() {
             data={conversations}
             keyExtractor={(c) => c.id}
             contentContainerClassName=""
+            removeClippedSubviews={true}
+            initialNumToRender={15}
+            maxToRenderPerBatch={10}
+            windowSize={5}
+            updateCellsBatchingPeriod={50}
             onEndReached={() => {
               if (hasNextPage && !isFetchingNextPage) fetchNextPage();
             }}

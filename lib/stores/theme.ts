@@ -4,6 +4,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { z } from 'zod';
 import { ThemePreference } from '@/lib/schemas/enums';
 
+// SSR-safe storage: no-op during server-side rendering
+const ssrSafeStorage =
+  typeof window === 'undefined'
+    ? {
+        getItem: () => Promise.resolve(null),
+        setItem: () => Promise.resolve(),
+        removeItem: () => Promise.resolve(),
+      }
+    : AsyncStorage;
+
 type ThemePref = z.infer<typeof ThemePreference>;
 
 interface ThemeState {
@@ -24,7 +34,7 @@ export const useThemeStore = create<ThemeState>()(
     }),
     {
       name: 'clipper_theme_preference',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => ssrSafeStorage),
       partialize: (s) => ({ themePreference: s.themePreference }),
       onRehydrateStorage: () => () => {
         useThemeStore.setState({ hasHydrated: true });
