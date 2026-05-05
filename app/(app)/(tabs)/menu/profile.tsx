@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -6,6 +6,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  RefreshControl,
   ScrollView,
   Text,
   TextInput,
@@ -62,6 +63,13 @@ export default function ProfileScreen() {
   const colors = useColors();
   const { data: profile, isLoading, isError, error, refetch } = useProfile();
   const update = useUpdateProfile();
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
   const [fullName, setFullName] = useState('');
   const [shopName, setShopName] = useState('');
@@ -121,11 +129,11 @@ export default function ProfileScreen() {
           <Header title="Edit Profile" onBack={() => router.back()} />
         </View>
         <View className="flex-1 items-center justify-center px-8">
-          <Text className="text-[15px] text-tertiary text-center mb-4">
+          <Text className="text-lg text-tertiary text-center mb-4">
             {getReadableError(error)}
           </Text>
           <Pressable onPress={() => refetch()}>
-            <Text className="text-[14px] font-semibold text-blue">Retry</Text>
+            <Text className="text-md font-semibold text-blue">Retry</Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -281,14 +289,14 @@ export default function ProfileScreen() {
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView className="flex-1 px-5" keyboardShouldPersistTaps="handled">
+        <ScrollView className="flex-1 px-5" keyboardShouldPersistTaps="handled" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.tertiary} />}>
           <Header
             title="Edit Profile"
             onBack={() => router.back()}
             right={
               dirty ? (
                 <Pressable onPress={handleSave}>
-                  <Text className="text-[15px] font-bold text-blue tracking-[-0.2px]">
+                  <Text className="text-lg font-bold text-blue tracking-[-0.2px]">
                     Save
                   </Text>
                 </Pressable>
@@ -312,7 +320,7 @@ export default function ProfileScreen() {
               </View>
             </Pressable>
             <Pressable onPress={() => setPhotoPicker(true)} className="mt-3">
-              <Text className="text-[14px] font-semibold text-blue tracking-[-0.1px]">
+              <Text className="text-md font-semibold text-blue tracking-[-0.1px]">
                 Change photo
               </Text>
             </Pressable>
@@ -420,7 +428,7 @@ export default function ProfileScreen() {
               />
             </View>
 
-            <Text className="text-[13px] font-semibold text-secondary tracking-[-0.1px] mb-[6px]">
+            <Text className="text-base font-semibold text-secondary tracking-[-0.1px] mb-[6px]">
               Pin your shop on the map
             </Text>
             <LocationPicker
@@ -434,7 +442,7 @@ export default function ProfileScreen() {
               }}
             />
             {errors.location && (
-              <Text className="text-[12px] text-red mt-1 mb-2 tracking-[-0.1px]">
+              <Text className="text-sm text-red mt-1 mb-2 tracking-[-0.1px]">
                 {errors.location}
               </Text>
             )}
@@ -482,10 +490,10 @@ export default function ProfileScreen() {
         <Pressable className="flex-1 bg-black/50 justify-end" onPress={() => setPhotoPicker(false)}>
           <Pressable className="bg-surface rounded-t-3xl px-5 pt-4 pb-8" onPress={() => {}}>
             <View className="w-10 h-1 rounded-full bg-separator-opaque self-center mb-[18px]" />
-            <Text className="text-[22px] font-extrabold text-ink tracking-[-0.5px]">
+            <Text className="text-3xl font-extrabold text-ink tracking-[-0.5px]">
               Profile photo
             </Text>
-            <Text className="text-[13px] text-secondary tracking-[-0.1px] mt-1 mb-[18px]">
+            <Text className="text-base text-secondary tracking-[-0.1px] mt-1 mb-[18px]">
               Choose a clear headshot or your shop logo.
             </Text>
             <View className="gap-2">
@@ -494,7 +502,7 @@ export default function ProfileScreen() {
                 className="flex-row items-center gap-3 px-4 py-[14px] rounded-md border-[1.5px] border-separator-opaque"
               >
                 <Icon name="camera" size={20} color={colors.ink} />
-                <Text className="text-[15px] font-semibold text-ink tracking-[-0.2px]">
+                <Text className="text-lg font-semibold text-ink tracking-[-0.2px]">
                   Take photo
                 </Text>
               </Pressable>
@@ -503,7 +511,7 @@ export default function ProfileScreen() {
                 className="flex-row items-center gap-3 px-4 py-[14px] rounded-md border-[1.5px] border-separator-opaque"
               >
                 <Icon name="image" size={20} color={colors.ink} />
-                <Text className="text-[15px] font-semibold text-ink tracking-[-0.2px]">
+                <Text className="text-lg font-semibold text-ink tracking-[-0.2px]">
                   Choose from library
                 </Text>
               </Pressable>
@@ -516,7 +524,7 @@ export default function ProfileScreen() {
                   className="flex-row items-center gap-3 px-4 py-[14px] rounded-md border-[1.5px] border-red/30"
                 >
                   <Icon name="trash" size={20} color={colors.red} />
-                  <Text className="text-[15px] font-semibold text-red tracking-[-0.2px]">
+                  <Text className="text-lg font-semibold text-red tracking-[-0.2px]">
                     Remove photo
                   </Text>
                 </Pressable>

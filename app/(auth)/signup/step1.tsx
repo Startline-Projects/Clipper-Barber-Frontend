@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import {
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -10,11 +11,9 @@ import {
 } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import Header from '@/components/ui/Header';
 import Btn from '@/components/ui/Btn';
 import TextField from '@/components/forms/TextField';
-import Icon from '@/components/ui/Icon';
 import { useSignupStep1 } from '@/lib/hooks/useAuth';
 import { useOnboardingStore } from '@/lib/stores/onboarding';
 import { toast } from '@/lib/stores/toast';
@@ -121,20 +120,14 @@ export default function SignupStep1Screen() {
           <Header title="" onBack={() => router.back()} />
 
           <View className="items-center mt-2 mb-5">
-            <View className="w-16 h-16 rounded-[18px] overflow-hidden mb-3">
-              <LinearGradient
-                colors={['#0A0A0A', '#2C2C2E']}
-                start={{ x: 0.1, y: 0 }}
-                end={{ x: 0.9, y: 1 }}
-                style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
-              >
-                <Icon name="scissors" size={28} color="#FFF" />
-              </LinearGradient>
-            </View>
+            <Image
+              source={require('@/assets/images/clipper-logo.png')}
+              className="w-16 h-16 rounded-[18px] mb-3"
+            />
             <Text className="text-[28px] font-extrabold text-ink tracking-[-0.6px]">
               Clipper
             </Text>
-            <Text className="text-[14px] text-secondary mt-1 tracking-[-0.1px]">
+            <Text className="text-md text-secondary mt-1 tracking-[-0.1px]">
               Set up your barber profile
             </Text>
           </View>
@@ -150,11 +143,11 @@ export default function SignupStep1Screen() {
               />
             ))}
           </View>
-          <Text className="text-[11px] font-semibold text-tertiary tracking-[0.6px] uppercase mb-5">
+          <Text className="text-xs font-semibold text-tertiary tracking-[0.6px] uppercase mb-5">
             Step 1 of 3
           </Text>
 
-          <Text className="text-[22px] font-extrabold text-ink tracking-[-0.5px] mb-5">
+          <Text className="text-3xl font-extrabold text-ink tracking-[-0.5px] mb-5">
             Your Account
           </Text>
 
@@ -229,7 +222,7 @@ export default function SignupStep1Screen() {
                   }
                   accessibilityRole="button"
                 >
-                  <Text className="text-[12px] font-semibold text-tertiary">
+                  <Text className="text-sm font-semibold text-tertiary">
                     {showPw ? 'Hide' : 'Show'}
                   </Text>
                 </Pressable>
@@ -245,11 +238,11 @@ export default function SignupStep1Screen() {
           />
 
           <View className="flex-row justify-center mt-6 mb-8">
-            <Text className="text-[13px] text-secondary tracking-[-0.1px]">
+            <Text className="text-base text-secondary tracking-[-0.1px]">
               Already have an account?{' '}
             </Text>
             <Pressable onPress={() => router.replace('/(auth)/login')}>
-              <Text className="text-[13px] font-bold text-ink">Log in</Text>
+              <Text className="text-base font-bold text-ink">Log in</Text>
             </Pressable>
           </View>
         </ScrollView>

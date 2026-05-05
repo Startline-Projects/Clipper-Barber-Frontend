@@ -37,10 +37,10 @@ const NoShowConfirmSheet = forwardRef<BottomSheet, NoShowConfirmSheetProps>(
             <Icon name="alert" size={26} color={colors.red} />
           </View>
 
-          <Text className="text-[18px] font-bold text-ink tracking-[-0.3px] mb-2">
+          <Text className="text-xl font-bold text-ink tracking-[-0.3px] mb-2">
             Charge no-show fee?
           </Text>
-          <Text className="text-[14px] text-secondary text-center leading-[20px] mb-6">
+          <Text className="text-md text-secondary text-center leading-[20px] mb-6">
             This will charge the client a ${fee} no-show fee. This action cannot
             be undone.
           </Text>
@@ -50,7 +50,7 @@ const NoShowConfirmSheet = forwardRef<BottomSheet, NoShowConfirmSheetProps>(
               onPress={onCancel}
               className="flex-1 items-center py-[14px] rounded-md bg-bg border-[1.5px] border-separator-opaque active:opacity-70"
             >
-              <Text className="text-[15px] font-semibold text-ink">Cancel</Text>
+              <Text className="text-lg font-semibold text-ink">Cancel</Text>
             </Pressable>
 
             <Pressable
@@ -58,7 +58,7 @@ const NoShowConfirmSheet = forwardRef<BottomSheet, NoShowConfirmSheetProps>(
               className="flex-1 flex-row items-center justify-center gap-[6px] py-[14px] rounded-md bg-red active:opacity-70"
             >
               <Icon name="dollar" size={16} color="#FFF" />
-              <Text className="text-[15px] font-semibold text-white">
+              <Text className="text-lg font-semibold text-white">
                 Charge ${fee}
               </Text>
             </Pressable>

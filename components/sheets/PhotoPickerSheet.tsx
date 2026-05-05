@@ -66,10 +66,10 @@ const PhotoPickerSheet = forwardRef<BottomSheet, PhotoPickerSheetProps>(
         handleIndicatorStyle={{ backgroundColor: colors.quaternary }}
       >
         <BottomSheetView className="px-6 pb-10 pt-2">
-          <Text className="text-[18px] font-bold text-ink tracking-[-0.3px] mb-1">
+          <Text className="text-xl font-bold text-ink tracking-[-0.3px] mb-1">
             Profile photo
           </Text>
-          <Text className="text-[14px] text-secondary mb-5">
+          <Text className="text-md text-secondary mb-5">
             Update your profile picture
           </Text>
 

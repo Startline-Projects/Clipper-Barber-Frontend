@@ -34,6 +34,18 @@
          xxl: '24px',
          xxxl: '32px',
        },
+       fontSize: {
+         '2xs': ['10px', '14px'],
+         xs:    ['11px', '14px'],
+         sm:    ['12px', '16px'],
+         base:  ['13px', '18px'],
+         md:    ['14px', '20px'],
+         lg:    ['15px', '20px'],
+         xl:    ['17px', '22px'],
+         '2xl': ['20px', '26px'],
+         '3xl': ['22px', '28px'],
+         '4xl': ['26px', '32px'],
+       },
        borderRadius: {
          xs: '8px',
          sm: '12px',

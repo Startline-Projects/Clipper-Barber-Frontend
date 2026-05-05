@@ -79,7 +79,7 @@ export default function ChangePasswordScreen() {
       accessibilityLabel={show ? 'Hide password' : 'Show password'}
       accessibilityRole="button"
     >
-      <Text className="text-[12px] font-semibold text-tertiary">
+      <Text className="text-sm font-semibold text-tertiary">
         {show ? 'Hide' : 'Show'}
       </Text>
     </Pressable>

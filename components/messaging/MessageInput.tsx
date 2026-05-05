@@ -18,12 +18,12 @@ export default function MessageInput({
         value={value}
         onChangeText={onChangeText}
         placeholder="Message..."
-        className="flex-1 px-[18px] py-3 rounded-full border-[1.5px] border-separator-opaque bg-bg text-[15px] text-ink tracking-[-0.2px] placeholder:text-tertiary"
+        className="flex-1 px-[18px] py-3 rounded-full border-[1.5px] border-separator-opaque bg-bg text-lg text-ink tracking-[-0.2px] placeholder:text-tertiary"
       />
       <Pressable
         onPress={onSend}
         disabled={!value.trim()}
-        className="w-[42px] h-[42px] rounded-full bg-ink items-center justify-center active:opacity-70 disabled:opacity-40"
+        className="w-11 h-11 rounded-full bg-ink items-center justify-center active:opacity-70 disabled:opacity-40"
       >
         <Icon name="send" size={16} color="#FFF" />
       </Pressable>

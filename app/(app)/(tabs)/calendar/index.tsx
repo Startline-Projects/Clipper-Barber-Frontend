@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   Dimensions,
   Pressable,
+  RefreshControl,
   ScrollView,
   Text,
   View,
@@ -80,7 +81,14 @@ export default function CalendarScreen() {
   const [view, setView] = useState('Week');
   const [baseDate, setBaseDate] = useState(() => new Date());
 
-  const { data } = useBookings({ timeframe: 'upcoming' });
+  const { data, refetch } = useBookings({ timeframe: 'upcoming' });
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
   const allBookings = useMemo(
     () => data?.pages.flatMap((p) => p.bookings) ?? [],
@@ -109,7 +117,7 @@ export default function CalendarScreen() {
                 style={{ backgroundColor: c }}
                 className="w-2 h-2 rounded-[3px]"
               />
-              <Text className="text-[12px] text-secondary font-medium tracking-[-0.1px]">
+              <Text className="text-sm text-secondary font-medium tracking-[-0.1px]">
                 {TYPE_LABELS[k]}
               </Text>
             </View>
@@ -131,6 +139,8 @@ export default function CalendarScreen() {
             });
           }}
           onGoToToday={() => setBaseDate(new Date())}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
         />
       ) : (
         <MonthView
@@ -145,6 +155,8 @@ export default function CalendarScreen() {
           today={today}
           bookings={allBookings}
           onPressBooking={(id) => router.push(`/(app)/(tabs)/calendar/${id}`)}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
         />
       )}
     </SafeAreaView>
@@ -158,6 +170,8 @@ function WeekView({
   onPress,
   onChangeWeek,
   onGoToToday,
+  refreshing,
+  onRefresh,
 }: {
   weekDates: Date[];
   today: Date;
@@ -165,6 +179,8 @@ function WeekView({
   onPress: (id: string) => void;
   onChangeWeek: (offset: number) => void;
   onGoToToday: () => void;
+  refreshing: boolean;
+  onRefresh: () => void;
 }) {
   const colors = useColors();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -184,7 +200,7 @@ function WeekView({
     : '';
 
   return (
-    <ScrollView className="flex-1 px-5">
+    <ScrollView className="flex-1 px-5" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.tertiary} />}>
       {/* Week navigation */}
       <View className="flex-row items-center justify-between mb-3">
         <Pressable onPress={() => onChangeWeek(-1)} className="p-2">
@@ -193,11 +209,11 @@ function WeekView({
           </View>
         </Pressable>
         <Pressable onPress={onGoToToday} className="flex-row items-center gap-2">
-          <Text className="text-[14px] font-bold text-ink tracking-[-0.2px]">
+          <Text className="text-md font-bold text-ink tracking-[-0.2px]">
             {rangeLabel}
           </Text>
           {!isCurrentWeek && (
-            <Text className="text-[12px] font-semibold text-blue">Today</Text>
+            <Text className="text-sm font-semibold text-blue">Today</Text>
           )}
         </Pressable>
         <Pressable onPress={() => onChangeWeek(1)} className="p-2">
@@ -217,19 +233,18 @@ function WeekView({
               style={{ width: COL_WIDTH }}
               className="items-center active:opacity-70"
             >
-              <Text className="text-[11px] font-semibold text-gray-900 dark:text-white tracking-[0.3px]">
+              <Text className="text-xs font-semibold text-ink tracking-[0.3px]">
                 {DAY_NAMES[i]}
               </Text>
               <View
                 className={`w-7 h-7 rounded-full items-center justify-center mt-1 ${
-                  isSelected ? 'bg-green dark:bg-green' : ''
+                  isSelected ? 'bg-green' : ''
                 }`}
               >
                 <Text
-                  className={`text-[14px] font-bold ${
-                    isSelected
-                      ? 'text-white dark:text-white'
-                      : 'text-gray-400 dark:text-gray-500'
+                  style={isSelected ? { color: colors.bg } : undefined}
+                  className={`text-md font-bold ${
+                    isSelected ? '' : 'text-tertiary'
                   }`}
                 >
                   {d.getDate()}
@@ -248,7 +263,7 @@ function WeekView({
           style={{ minHeight: 48 }}
         >
           <View style={{ width: TIME_GUTTER }} className="items-end pr-[6px] pt-[3px]">
-            <Text className="text-[10px] font-medium text-quaternary tracking-[-0.2px]">
+            <Text className="text-2xs font-medium text-quaternary tracking-[-0.2px]">
               {formatHour(hr)}
             </Text>
           </View>
@@ -275,7 +290,7 @@ function WeekView({
                 }}
               >
                 <Text
-                  className="text-[10px] font-bold text-ink leading-[12px] tracking-[-0.1px]"
+                  className="text-2xs font-bold text-ink leading-[12px] tracking-[-0.1px]"
                   numberOfLines={1}
                 >
                   {slot.isRecurring ? '↻ ' : ''}
@@ -283,7 +298,7 @@ function WeekView({
                 </Text>
                 <Text
                   style={{ color: tc }}
-                  className="text-[9px] font-semibold mt-[1px]"
+                  className="text-2xs font-semibold mt-[1px]"
                 >
                   ${slot.totalPrice}
                 </Text>
@@ -296,12 +311,12 @@ function WeekView({
       {/* Selected day bookings */}
       {selectedDate && (
         <View className="mt-4 mb-8">
-          <Text className="text-[15px] font-bold text-ink tracking-[-0.2px] mb-3">
+          <Text className="text-lg font-bold text-ink tracking-[-0.2px] mb-3">
             {selectedDateLabel}
           </Text>
           {selectedBookings.length === 0 ? (
             <View className="py-6 items-center">
-              <Text className="text-[13px] text-tertiary">No bookings</Text>
+              <Text className="text-base text-tertiary">No bookings</Text>
             </View>
           ) : (
             <View className="gap-2">
@@ -338,12 +353,16 @@ function MonthView({
   bookings,
   onChangeMonth,
   onPressBooking,
+  refreshing,
+  onRefresh,
 }: {
   baseDate: Date;
   today: Date;
   bookings: BookingListItem[];
   onChangeMonth: (offset: number) => void;
   onPressBooking: (id: string) => void;
+  refreshing: boolean;
+  onRefresh: () => void;
 }) {
   const { firstDay, daysInMonth } = getMonthDates(baseDate);
   const colors = useColors();
@@ -387,7 +406,7 @@ function MonthView({
     : '';
 
   return (
-    <ScrollView className="flex-1 px-5">
+    <ScrollView className="flex-1 px-5" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.tertiary} />}>
       <Card elevated>
         {/* Month navigation */}
         <View className="flex-row items-center justify-between mb-3">
@@ -408,7 +427,7 @@ function MonthView({
         <View className="flex-row">
           {DAY_LETTERS.map((d, i) => (
             <View key={i} className="flex-1 items-center py-2">
-              <Text className="text-[12px] font-semibold text-quaternary">
+              <Text className="text-sm font-semibold text-quaternary">
                 {d}
               </Text>
             </View>
@@ -443,17 +462,15 @@ function MonthView({
                         ? { backgroundColor: colors.ink }
                         : undefined
                   }
-                  className="w-8 h-8 rounded-full items-center justify-center"
+                  className="w-11 h-11 rounded-full items-center justify-center"
                 >
                   <Text
                     style={
-                      isSelected
-                        ? { color: '#FFFFFF' }
-                        : isToday
-                          ? { color: colors.bg }
-                          : undefined
+                      isSelected || isToday
+                        ? { color: colors.bg }
+                        : undefined
                     }
-                    className={`text-[15px] ${
+                    className={`text-lg ${
                       isSelected || isToday ? 'font-bold' : 'text-ink'
                     }`}
                   >
@@ -483,12 +500,12 @@ function MonthView({
       {/* Selected day bookings */}
       {selectedDay !== null && (
         <View className="mt-4 mb-8">
-          <Text className="text-[15px] font-bold text-ink tracking-[-0.2px] mb-3">
+          <Text className="text-lg font-bold text-ink tracking-[-0.2px] mb-3">
             {selectedDateLabel}
           </Text>
           {selectedBookings.length === 0 ? (
             <View className="py-6 items-center">
-              <Text className="text-[13px] text-tertiary">No bookings</Text>
+              <Text className="text-base text-tertiary">No bookings</Text>
             </View>
           ) : (
             <View className="gap-2">

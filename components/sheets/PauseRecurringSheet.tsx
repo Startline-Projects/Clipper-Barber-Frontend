@@ -52,10 +52,10 @@ const PauseRecurringSheet = forwardRef<BottomSheet, PauseRecurringSheetProps>(
         handleIndicatorStyle={{ backgroundColor: colors.quaternary }}
       >
         <BottomSheetView className="px-6 pb-10 pt-2">
-          <Text className="text-[18px] font-bold text-ink tracking-[-0.3px] mb-1">
+          <Text className="text-xl font-bold text-ink tracking-[-0.3px] mb-1">
             Pause recurring
           </Text>
-          <Text className="text-[14px] text-secondary mb-5">
+          <Text className="text-md text-secondary mb-5">
             Pause {clientName}'s recurring booking
           </Text>
 
@@ -71,7 +71,7 @@ const PauseRecurringSheet = forwardRef<BottomSheet, PauseRecurringSheetProps>(
                 }`}
               >
                 <Text
-                  className={`flex-1 text-[15px] tracking-[-0.2px] ${
+                  className={`flex-1 text-lg tracking-[-0.2px] ${
                     selected === i
                       ? 'font-semibold text-ink'
                       : 'font-medium text-secondary'
@@ -91,7 +91,7 @@ const PauseRecurringSheet = forwardRef<BottomSheet, PauseRecurringSheetProps>(
               onPress={onCancel}
               className="flex-1 items-center py-[14px] rounded-md bg-bg border-[1.5px] border-separator-opaque active:opacity-70"
             >
-              <Text className="text-[15px] font-semibold text-ink">Cancel</Text>
+              <Text className="text-lg font-semibold text-ink">Cancel</Text>
             </Pressable>
 
             <Pressable
@@ -99,7 +99,7 @@ const PauseRecurringSheet = forwardRef<BottomSheet, PauseRecurringSheetProps>(
               className="flex-1 flex-row items-center justify-center gap-[6px] py-[14px] rounded-md bg-orange active:opacity-70"
             >
               <Icon name="clock" size={16} color="#FFF" />
-              <Text className="text-[15px] font-semibold text-white">
+              <Text className="text-lg font-semibold text-white">
                 Pause
               </Text>
             </Pressable>

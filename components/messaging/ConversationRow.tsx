@@ -40,19 +40,19 @@ export default memo(function ConversationRow({
       <View className="flex-1 min-w-0">
         <View className="flex-row justify-between items-baseline">
           <Text
-            className={`text-[15px] tracking-[-0.2px] ${
+            className={`text-lg tracking-[-0.2px] ${
               unread ? 'font-bold' : 'font-medium'
             } text-ink`}
             numberOfLines={1}
           >
             {clientName}
           </Text>
-          <Text className="text-[12px] text-tertiary font-medium ml-2 shrink-0">
+          <Text className="text-sm text-tertiary font-medium ml-2 shrink-0">
             {time}
           </Text>
         </View>
         <Text
-          className={`text-[14px] tracking-[-0.1px] mt-[2px] ${
+          className={`text-md tracking-[-0.1px] mt-[2px] ${
             unread ? 'font-medium text-ink' : 'text-tertiary'
           }`}
           numberOfLines={1}

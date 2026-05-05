@@ -167,14 +167,14 @@ const AddressAutocomplete = forwardRef<TextInput, AddressAutocompleteProps>(
                 </View>
                 <View className="flex-1">
                   <Text
-                    className="text-[14px] font-semibold text-ink tracking-[-0.1px]"
+                    className="text-md font-semibold text-ink tracking-[-0.1px]"
                     numberOfLines={1}
                   >
                     {s.primaryText}
                   </Text>
                   {s.secondaryText ? (
                     <Text
-                      className="text-[12px] text-tertiary mt-[2px] tracking-[-0.05px]"
+                      className="text-sm text-tertiary mt-[2px] tracking-[-0.05px]"
                       numberOfLines={1}
                     >
                       {s.secondaryText}

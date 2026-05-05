@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
   Modal,
   Pressable,
+  RefreshControl,
   Text,
   TextInput,
   View,
@@ -35,7 +36,7 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   return (
     <View className="flex-1 items-center justify-center gap-4 p-6 bg-bg">
       <Text className="text-[16px] font-semibold text-ink">Something went wrong</Text>
-      <Text className="text-[14px] text-secondary text-center">{error.message}</Text>
+      <Text className="text-md text-secondary text-center">{error.message}</Text>
       <Pressable onPress={retry} className="px-6 py-3 bg-blue rounded-sm">
         <Text className="text-white font-semibold">Try again</Text>
       </Pressable>
@@ -87,6 +88,17 @@ export default function BookingsScreen() {
   const recurringStatus =
     RECURRING_STATUS_MAP[recurringSub] as 'active' | 'pending_barber_approval' | 'paused';
   const recurringQuery = useRecurringBookings({ status: recurringStatus });
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    if (tab === 'Recurring') {
+      await recurringQuery.refetch();
+    } else {
+      await bookingsQuery.refetch();
+    }
+    setRefreshing(false);
+  }, [tab, bookingsQuery, recurringQuery]);
 
   const allBookings = useMemo(
     () => bookingsQuery.data?.pages.flatMap((p) => p.bookings) ?? [],
@@ -155,6 +167,7 @@ export default function BookingsScreen() {
             data={filteredBookings}
             keyExtractor={(b) => b.id}
             contentContainerClassName="px-5"
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.tertiary} />}
             removeClippedSubviews={true}
             initialNumToRender={10}
             maxToRenderPerBatch={5}
@@ -168,7 +181,7 @@ export default function BookingsScreen() {
             ListEmptyComponent={
               !bookingsQuery.isLoading ? (
                 <View className="items-center py-12">
-                  <Text className="text-[15px] text-tertiary font-medium">
+                  <Text className="text-lg text-tertiary font-medium">
                     No {tab.toLowerCase()} bookings
                   </Text>
                 </View>
@@ -197,6 +210,8 @@ export default function BookingsScreen() {
           onSubChange={setRecurringSub}
           items={recurringList}
           isLoading={recurringQuery.isLoading}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
           onPress={(id) =>
             router.push(`/(app)/(tabs)/bookings/recurring/${id}`)
           }
@@ -236,11 +251,11 @@ function BookingCard({
             {b.isRecurring && (
               <Icon name="loop" size={12} color={colors.blue} />
             )}
-            <Text className="text-[15px] font-semibold text-ink tracking-[-0.2px]">
+            <Text className="text-lg font-semibold text-ink tracking-[-0.2px]">
               {b.client.name}
             </Text>
           </View>
-          <Text className="text-[13px] text-secondary tracking-[-0.1px] mt-[2px]">
+          <Text className="text-base text-secondary tracking-[-0.1px] mt-[2px]">
             {b.service.name} · {formatTime(b.scheduledAt)}
           </Text>
           <View className="flex-row gap-1 mt-[5px]">
@@ -248,7 +263,7 @@ function BookingCard({
             <StatusBadge status={b.status} />
           </View>
         </View>
-        <Text className="text-[17px] font-bold text-ink tracking-[-0.3px]">
+        <Text className="text-xl font-bold text-ink tracking-[-0.3px]">
           ${b.totalPrice}
         </Text>
       </View>
@@ -258,7 +273,7 @@ function BookingCard({
           onPress={() => onNoShow()}
           className="mt-3 py-[10px] rounded-sm border-[1.5px] border-red/25 bg-red/[0.06] items-center"
         >
-          <Text className="text-[13px] font-semibold text-red">
+          <Text className="text-base font-semibold text-red">
             Mark No-Show
           </Text>
         </Pressable>
@@ -267,7 +282,7 @@ function BookingCard({
       {isPast && b.status === 'no_show' && (
         <View className="flex-row items-center gap-2 mt-[10px] px-3 py-2 rounded-sm bg-green/10">
           <Icon name="check" size={14} color={colors.green} />
-          <Text className="text-[12px] font-semibold text-green">
+          <Text className="text-sm font-semibold text-green">
             No-show fee charged
           </Text>
         </View>
@@ -281,12 +296,16 @@ function RecurringTab({
   onSubChange,
   items,
   isLoading,
+  refreshing,
+  onRefresh,
   onPress,
 }: {
   sub: string;
   onSubChange: (s: string) => void;
   items: RecurringListItem[];
   isLoading: boolean;
+  refreshing: boolean;
+  onRefresh: () => void;
   onPress: (id: string) => void;
 }) {
   const colors = useColors();
@@ -316,7 +335,7 @@ function RecurringTab({
         </View>
       ) : items.length === 0 ? (
         <View className="items-center py-12">
-          <Text className="text-[15px] text-tertiary font-medium">
+          <Text className="text-lg text-tertiary font-medium">
             No {sub.toLowerCase()} arrangements
           </Text>
         </View>
@@ -325,6 +344,7 @@ function RecurringTab({
           data={items}
           keyExtractor={(r) => r.id}
           contentContainerClassName="px-5"
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.tertiary} />}
           renderItem={({ item: r }) => (
             <Card elevated onPress={() => onPress(r.id)}>
               <View className="flex-row items-center gap-3">
@@ -332,14 +352,14 @@ function RecurringTab({
                 <View className="flex-1">
                   <View className="flex-row items-center gap-[5px]">
                     <Icon name="loop" size={12} color={colors.blue} />
-                    <Text className="text-[15px] font-semibold text-ink tracking-[-0.2px]">
+                    <Text className="text-lg font-semibold text-ink tracking-[-0.2px]">
                       {r.client.name}
                     </Text>
                   </View>
-                  <Text className="text-[13px] text-secondary mt-[2px]">
+                  <Text className="text-base text-secondary mt-[2px]">
                     {DAY_NAMES[r.dayOfWeek]} · {r.slotTime} · {r.frequency}
                   </Text>
-                  <Text className="text-[12px] text-tertiary mt-[1px]">
+                  <Text className="text-sm text-tertiary mt-[1px]">
                     {r.service.name}
                     {r.nextOccurrenceAt
                       ? ` · Next: ${formatDate(r.nextOccurrenceAt)}`
@@ -347,10 +367,10 @@ function RecurringTab({
                   </Text>
                 </View>
                 <View className="items-end">
-                  <Text className="text-[17px] font-bold text-ink tracking-[-0.3px]">
+                  <Text className="text-xl font-bold text-ink tracking-[-0.3px]">
                     ${r.priceUsd}
                   </Text>
-                  <Text className="text-[11px] text-tertiary">/visit</Text>
+                  <Text className="text-xs text-tertiary">/visit</Text>
                 </View>
               </View>
 
@@ -449,15 +469,15 @@ function PauseDrawer({
       <Pressable className="flex-1 bg-black/50 justify-end" onPress={onClose}>
         <Pressable className="bg-surface rounded-t-3xl px-5 pt-4 pb-8" onPress={() => {}}>
           <View className="w-10 h-1 rounded-full bg-separator-opaque self-center mb-[18px]" />
-          <Text className="text-[22px] font-extrabold text-ink tracking-[-0.5px]">
+          <Text className="text-3xl font-extrabold text-ink tracking-[-0.5px]">
             Pause recurring
           </Text>
-          <Text className="text-[13px] text-secondary tracking-[-0.1px] mt-1 mb-[18px]">
+          <Text className="text-base text-secondary tracking-[-0.1px] mt-1 mb-[18px]">
             {recurring?.client.name} — {recurring ? DAY_NAMES[recurring.dayOfWeek] : ''}{' '}
             {recurring?.slotTime}
           </Text>
 
-          <Text className="text-[11px] font-bold text-tertiary tracking-[0.3px] uppercase mb-2">
+          <Text className="text-xs font-bold text-tertiary tracking-[0.3px] uppercase mb-2">
             Pause starting
           </Text>
           <View className="flex-row flex-wrap gap-[6px] mb-4">
@@ -466,7 +486,7 @@ function PauseDrawer({
             ))}
           </View>
 
-          <Text className="text-[11px] font-bold text-tertiary tracking-[0.3px] uppercase mb-2">
+          <Text className="text-xs font-bold text-tertiary tracking-[0.3px] uppercase mb-2">
             For how long
           </Text>
           <View className="flex-row flex-wrap gap-[6px] mb-4">
@@ -475,7 +495,7 @@ function PauseDrawer({
             ))}
           </View>
 
-          <Text className="text-[11px] font-bold text-tertiary tracking-[0.3px] uppercase mb-2">
+          <Text className="text-xs font-bold text-tertiary tracking-[0.3px] uppercase mb-2">
             Note for client (optional)
           </Text>
           <TextInput
@@ -484,11 +504,11 @@ function PauseDrawer({
             placeholder="Out of town, family emergency, etc."
             multiline
             numberOfLines={3}
-            className="w-full px-[14px] py-3 rounded-sm border-[1.5px] border-separator-opaque bg-surface text-[14px] text-ink tracking-[-0.1px] mb-[14px]"
+            className="w-full px-[14px] py-3 rounded-sm border-[1.5px] border-separator-opaque bg-surface text-md text-ink tracking-[-0.1px] mb-[14px]"
           />
 
           <View className="p-3 rounded-sm bg-orange/[0.08] border border-orange/20 mb-4">
-            <Text className="text-[13px] text-secondary leading-[20px] tracking-[-0.1px]">
+            <Text className="text-base text-secondary leading-[20px] tracking-[-0.1px]">
               All upcoming visits in this window will be cancelled. Your recurring
               slot resumes automatically after.
             </Text>
@@ -536,10 +556,10 @@ function NoShowSheet({
           <View className="w-14 h-14 rounded-full bg-red/10 items-center justify-center self-center mb-[14px]">
             <Icon name="alert" size={28} color={colors.red} />
           </View>
-          <Text className="text-[22px] font-extrabold text-ink tracking-[-0.5px] text-center">
+          <Text className="text-3xl font-extrabold text-ink tracking-[-0.5px] text-center">
             Charge no-show fee?
           </Text>
-          <Text className="text-[14px] text-secondary text-center leading-[20px] tracking-[-0.1px] mt-2 mb-[18px] px-2">
+          <Text className="text-md text-secondary text-center leading-[20px] tracking-[-0.1px] mt-2 mb-[18px] px-2">
             {booking?.client.name} will be marked as a no-show and notified.
           </Text>
           <View className="flex-row gap-[10px]">

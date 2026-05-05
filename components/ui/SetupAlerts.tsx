@@ -28,8 +28,8 @@ function AlertRow({ icon, title, sub, onPress }: AlertRowProps) {
         <Icon name={icon} size={18} color={colors.orange} />
       </View>
       <View className="flex-1">
-        <Text className="text-[15px] font-semibold text-ink tracking-[-0.2px]">{title}</Text>
-        <Text className="text-[13px] text-orange mt-[1px] tracking-[-0.1px]">{sub}</Text>
+        <Text className="text-lg font-semibold text-ink tracking-[-0.2px]">{title}</Text>
+        <Text className="text-base text-orange mt-[1px] tracking-[-0.1px]">{sub}</Text>
       </View>
       <Icon name="chevron" size={16} color={colors.orange} />
     </Pressable>

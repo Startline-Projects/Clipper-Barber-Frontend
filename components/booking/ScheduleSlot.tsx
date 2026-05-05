@@ -43,10 +43,10 @@ export default memo(function ScheduleSlot({
       }`}
     >
       <View className="items-center min-w-[44px]">
-        <Text className="text-[17px] font-bold text-ink tracking-[-0.3px]">
+        <Text className="text-xl font-bold text-ink tracking-[-0.3px]">
           {timeValue}
         </Text>
-        <Text className="text-[11px] font-semibold text-tertiary">
+        <Text className="text-xs font-semibold text-tertiary">
           {timePeriod}
         </Text>
       </View>
@@ -60,19 +60,19 @@ export default memo(function ScheduleSlot({
         <View className="flex-row items-center gap-[5px]">
           {isRecurring && <Icon name="loop" size={13} color={colors.blue} />}
           <Text
-            className="text-[15px] font-semibold text-ink tracking-[-0.2px]"
+            className="text-lg font-semibold text-ink tracking-[-0.2px]"
             numberOfLines={1}
           >
             {clientName}
           </Text>
         </View>
         <View className="flex-row items-center gap-[5px] mt-[2px]">
-          <Text className="text-[13px] text-secondary">{serviceName}</Text>
+          <Text className="text-base text-secondary">{serviceName}</Text>
           <TypeBadge type={bookingType} />
         </View>
       </View>
 
-      <Text className="text-[17px] font-bold text-ink tracking-[-0.3px]">
+      <Text className="text-xl font-bold text-ink tracking-[-0.3px]">
         ${price}
       </Text>
     </Pressable>

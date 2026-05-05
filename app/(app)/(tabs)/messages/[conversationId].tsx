@@ -26,7 +26,7 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   return (
     <View className="flex-1 items-center justify-center gap-4 p-6 bg-bg">
       <Text className="text-[16px] font-semibold text-ink">Something went wrong</Text>
-      <Text className="text-[14px] text-secondary text-center">{error.message}</Text>
+      <Text className="text-md text-secondary text-center">{error.message}</Text>
       <Pressable onPress={retry} className="px-6 py-3 bg-blue rounded-sm">
         <Text className="text-white font-semibold">Try again</Text>
       </Pressable>
@@ -129,7 +129,7 @@ export default function ConversationScreen() {
             placeholderTextColor={colors.tertiary}
             multiline
             style={{ borderColor: colors.tertiary }}
-            className="flex-1 px-[18px] py-3 rounded-3xl border-[1.5px] bg-bg text-[15px] text-ink tracking-[-0.2px] max-h-[100px]"
+            className="flex-1 px-[18px] py-3 rounded-3xl border-[1.5px] bg-bg text-lg text-ink tracking-[-0.2px] max-h-[100px]"
             returnKeyType="send"
             blurOnSubmit={false}
             onSubmitEditing={handleSend}
@@ -165,14 +165,14 @@ function MessageBubble({ message: m }: { message: Message }) {
         }`}
       >
         <Text
-          className={`text-[15px] leading-[21px] tracking-[-0.2px] ${
+          className={`text-lg leading-[21px] tracking-[-0.2px] ${
             isBarber ? 'text-bg' : 'text-ink'
           }`}
         >
           {m.body}
         </Text>
         <Text
-          className={`text-[11px] mt-1 text-right ${
+          className={`text-xs mt-1 text-right ${
             isBarber ? 'text-bg/40' : 'text-ink/40'
           }`}
         >

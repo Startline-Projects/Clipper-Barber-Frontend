@@ -25,14 +25,14 @@ export default function Header({ title, subtitle, onBack, right }: HeaderProps) 
         <View className="flex-1">
           <Text
             className={`font-extrabold text-ink tracking-[-0.6px] ${
-              onBack ? 'text-[20px]' : 'text-[30px]'
+              onBack ? 'text-2xl' : 'text-[30px]'
             }`}
             numberOfLines={1}
           >
             {title}
           </Text>
           {subtitle && (
-            <Text className="text-[13px] text-tertiary mt-[1px] tracking-[-0.1px]">
+            <Text className="text-base text-tertiary mt-[1px] tracking-[-0.1px]">
               {subtitle}
             </Text>
           )}

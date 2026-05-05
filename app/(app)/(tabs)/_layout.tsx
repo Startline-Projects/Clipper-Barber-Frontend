@@ -1,5 +1,4 @@
-import { useRef } from 'react';
-import { Tabs, useRouter } from 'expo-router';
+import { Tabs } from 'expo-router';
 import { View, Text } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import Icon, { type IconName } from '@/components/ui/Icon';
@@ -41,8 +40,6 @@ function TabIcon({
 
 export default function TabsLayout() {
   const colors = useColors();
-  const router = useRouter();
-  const lastTabPress = useRef(0);
   const { data: unreadCount } = useUnreadCount();
 
   return (
@@ -80,13 +77,8 @@ export default function TabsLayout() {
             ),
           }}
           listeners={{
-            tabPress: (e) => {
-              e.preventDefault();
-              const now = Date.now();
-              if (now - lastTabPress.current < 500) return;
-              lastTabPress.current = now;
+            tabPress: () => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.replace(tab.root as any);
             },
           }}
         />

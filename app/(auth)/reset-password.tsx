@@ -44,10 +44,10 @@ export default function ResetPasswordScreen() {
           <View className="w-14 h-14 rounded-full bg-red/10 items-center justify-center mb-4">
             <Icon name="alert" size={26} color={colors.red} />
           </View>
-          <Text className="text-[18px] font-bold text-ink tracking-[-0.3px] mb-2 text-center">
+          <Text className="text-xl font-bold text-ink tracking-[-0.3px] mb-2 text-center">
             Invalid reset link
           </Text>
-          <Text className="text-[14px] text-secondary text-center leading-[20px] mb-6">
+          <Text className="text-md text-secondary text-center leading-[20px] mb-6">
             This link is invalid or has expired. Please request a new password
             reset.
           </Text>
@@ -94,10 +94,10 @@ export default function ResetPasswordScreen() {
           <View className="w-[72px] h-[72px] rounded-full bg-green/10 items-center justify-center mb-5">
             <Icon name="check" size={36} color={colors.green} />
           </View>
-          <Text className="text-[22px] font-extrabold text-ink tracking-[-0.5px] mb-2">
+          <Text className="text-3xl font-extrabold text-ink tracking-[-0.5px] mb-2">
             Password updated
           </Text>
-          <Text className="text-[14px] text-secondary text-center leading-[20px] mb-8">
+          <Text className="text-md text-secondary text-center leading-[20px] mb-8">
             Your password has been changed. Log in with your new password.
           </Text>
           <Btn
@@ -122,7 +122,7 @@ export default function ResetPasswordScreen() {
         >
           <Header title="New password" onBack={() => router.back()} />
 
-          <Text className="text-[14px] text-secondary leading-[20px] tracking-[-0.1px] mt-1 mb-6">
+          <Text className="text-md text-secondary leading-[20px] tracking-[-0.1px] mt-1 mb-6">
             Choose a new password. Must be at least {MIN_PASSWORD_LENGTH}{' '}
             characters.
           </Text>
@@ -154,7 +154,7 @@ export default function ResetPasswordScreen() {
                   }
                   accessibilityRole="button"
                 >
-                  <Text className="text-[12px] font-semibold text-tertiary">
+                  <Text className="text-sm font-semibold text-tertiary">
                     {showPw ? 'Hide' : 'Show'}
                   </Text>
                 </Pressable>
@@ -189,7 +189,7 @@ export default function ResetPasswordScreen() {
                   }
                   accessibilityRole="button"
                 >
-                  <Text className="text-[12px] font-semibold text-tertiary">
+                  <Text className="text-sm font-semibold text-tertiary">
                     {showConfirm ? 'Hide' : 'Show'}
                   </Text>
                 </Pressable>
