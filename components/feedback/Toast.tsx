@@ -76,7 +76,7 @@ function ToastItem({ toast }: { toast: ToastModel }) {
       >
         <Icon name={spec.name} size={16} color={spec.fg} />
       </View>
-      <Text className="flex-1 text-[14px] text-ink tracking-[-0.1px]" numberOfLines={3}>
+      <Text className="flex-1 text-md text-ink tracking-[-0.1px]" numberOfLines={3}>
         {toast.message}
       </Text>
       <Pressable

@@ -14,7 +14,7 @@ const TextField = forwardRef<TextInput, TextFieldProps>(function TextField(
 ) {
   return (
     <View className={half ? 'flex-1' : 'w-full'}>
-      <Text className="text-[13px] font-semibold text-secondary mb-[6px] tracking-[-0.1px]">
+      <Text className="text-base font-semibold text-secondary mb-[6px] tracking-[-0.1px]">
         {label}
       </Text>
       <View className="relative">
@@ -33,7 +33,7 @@ const TextField = forwardRef<TextInput, TextFieldProps>(function TextField(
         )}
       </View>
       {error && (
-        <Text className="text-[12px] text-red mt-[4px] tracking-[-0.1px]">
+        <Text className="text-sm text-red mt-xs tracking-[-0.1px]">
           {error}
         </Text>
       )}

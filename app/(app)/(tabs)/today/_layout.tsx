@@ -1,5 +1,5 @@
 import { Stack } from 'expo-router';
 
 export default function TodayLayout() {
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return <Stack screenOptions={{ headerShown: false, detachInactiveScreens: true }} />;
 }

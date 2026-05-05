@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { Redirect, Stack } from 'expo-router';
 import { useAuthStore } from '@/lib/stores/auth.store';
 import { useProfile } from '@/lib/hooks/useProfile';
@@ -26,5 +27,14 @@ export default function AppLayout() {
 
   if (!accessToken) return <Redirect href="/(auth)/welcome" />;
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: Platform.OS === 'ios' ? 'slide_from_right' : 'fade_from_bottom',
+        animationDuration: 280,
+        gestureEnabled: true,
+      }}
+    />
+  );
 }

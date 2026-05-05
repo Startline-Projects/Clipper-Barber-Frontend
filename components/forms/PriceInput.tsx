@@ -47,7 +47,7 @@ export default function PriceInput({
       />
       {suffix && (
         <Text
-          className={`text-[14px] text-tertiary ${
+          className={`text-md text-tertiary ${
             isEmphasized ? 'font-semibold' : ''
           }`}
         >

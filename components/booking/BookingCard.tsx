@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Card from '@/components/ui/Card';
 import Avatar from '@/components/ui/Avatar';
@@ -16,7 +17,7 @@ interface BookingCardProps {
   onPress?: () => void;
 }
 
-export default function BookingCard({
+export default memo(function BookingCard({
   clientName,
   serviceName,
   time,
@@ -35,14 +36,14 @@ export default function BookingCard({
           <View className="flex-row items-center gap-[5px]">
             {isRecurring && <Icon name="loop" size={12} color="#0A84FF" />}
             <Text
-              className="text-[15px] font-semibold text-ink tracking-[-0.2px]"
+              className="text-lg font-semibold text-ink tracking-[-0.2px]"
               numberOfLines={1}
             >
               {clientName}
             </Text>
           </View>
           <Text
-            className="text-[13px] text-secondary tracking-[-0.1px] mt-[2px]"
+            className="text-base text-secondary tracking-[-0.1px] mt-[2px]"
             numberOfLines={1}
           >
             {serviceName} · {time}
@@ -53,10 +54,10 @@ export default function BookingCard({
           </View>
         </View>
 
-        <Text className="text-[17px] font-bold text-ink tracking-[-0.3px]">
+        <Text className="text-xl font-bold text-ink tracking-[-0.3px]">
           ${price}
         </Text>
       </View>
     </Card>
   );
-}
+});

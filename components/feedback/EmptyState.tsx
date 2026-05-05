@@ -13,14 +13,14 @@ export default function EmptyState({ icon, title, subtitle }: EmptyStateProps) {
 
   return (
     <View className="flex-1 items-center justify-center px-8 py-16">
-      <View className="w-[56px] h-[56px] rounded-full bg-bg items-center justify-center mb-4">
+      <View className="w-14 h-14 rounded-full bg-bg items-center justify-center mb-4">
         <Icon name={icon} size={26} color={colors.tertiary} />
       </View>
-      <Text className="text-[16px] font-semibold text-ink tracking-[-0.2px] text-center mb-1">
+      <Text className="text-xl font-semibold text-ink tracking-[-0.2px] text-center mb-1">
         {title}
       </Text>
       {subtitle && (
-        <Text className="text-[14px] text-tertiary text-center leading-[20px]">
+        <Text className="text-md text-tertiary text-center leading-[20px]">
           {subtitle}
         </Text>
       )}

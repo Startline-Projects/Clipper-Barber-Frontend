@@ -18,21 +18,21 @@ export default function ThemeToggle() {
       accessibilityLabel="Light mode"
     >
       <View className="flex-row items-center gap-3">
-        <View className="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 items-center justify-center">
+        <View className="w-9 h-9 rounded-full bg-bg items-center justify-center">
           <Text className="text-lg">{isDark ? '🌙' : '☀️'}</Text>
         </View>
-        <Text className="text-base font-medium text-gray-900 dark:text-white">
+        <Text className="text-base font-medium text-ink">
           Light Mode
         </Text>
       </View>
 
       <View
         className={`w-12 h-6 rounded-full justify-center px-1 ${
-          isDark ? 'bg-gray-600' : 'bg-blue-500'
+          isDark ? 'bg-quaternary' : 'bg-blue'
         }`}
       >
         <View
-          className={`w-4 h-4 rounded-full bg-white shadow-sm ${
+          className={`w-4 h-4 rounded-full bg-surface shadow-sm ${
             isDark ? 'self-start' : 'self-end'
           }`}
         />

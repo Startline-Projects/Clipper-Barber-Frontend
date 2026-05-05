@@ -31,7 +31,11 @@
         "googleMaps": {
           "apiKey": "REPLACE_WITH_ANDROID_GOOGLE_MAPS_KEY"
         }
-      }
+      },
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -66,6 +70,13 @@
       "eas": {
         "projectId": "bf6f1b33-4f09-4cf1-bd25-e8b20564aebb"
       }
-    }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/bf6f1b33-4f09-4cf1-bd25-e8b20564aebb"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "owner": "yahiaaldeeb"
   }
 }

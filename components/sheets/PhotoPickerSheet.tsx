@@ -1,4 +1,4 @@
-import { forwardRef, useCallback } from 'react';
+import { forwardRef, useCallback, useMemo } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import Icon, { type IconName } from '@/components/ui/Icon';
@@ -25,6 +25,7 @@ const PhotoPickerSheet = forwardRef<BottomSheet, PhotoPickerSheetProps>(
     ref,
   ) {
     const colors = useColors();
+    const snapPoints = useMemo(() => ['35%'], []);
 
     const handleSheetChanges = useCallback(
       (index: number) => {
@@ -58,17 +59,17 @@ const PhotoPickerSheet = forwardRef<BottomSheet, PhotoPickerSheetProps>(
       <BottomSheet
         ref={ref}
         index={-1}
+        snapPoints={snapPoints}
         enablePanDownToClose
-        enableDynamicSizing
         onChange={handleSheetChanges}
         backgroundStyle={{ backgroundColor: colors.card }}
         handleIndicatorStyle={{ backgroundColor: colors.quaternary }}
       >
         <BottomSheetView className="px-6 pb-10 pt-2">
-          <Text className="text-[18px] font-bold text-ink tracking-[-0.3px] mb-1">
+          <Text className="text-xl font-bold text-ink tracking-[-0.3px] mb-1">
             Profile photo
           </Text>
-          <Text className="text-[14px] text-secondary mb-5">
+          <Text className="text-md text-secondary mb-5">
             Update your profile picture
           </Text>
 

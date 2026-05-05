@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Text, View } from 'react-native';
 
 interface MessageBubbleProps {
@@ -6,7 +7,7 @@ interface MessageBubbleProps {
   isBarber: boolean;
 }
 
-export default function MessageBubble({
+export default memo(function MessageBubble({
   body,
   time,
   isBarber,
@@ -25,14 +26,14 @@ export default function MessageBubble({
         }`}
       >
         <Text
-          className={`text-[15px] leading-[21px] tracking-[-0.2px] ${
+          className={`text-lg leading-[21px] tracking-[-0.2px] ${
             isBarber ? 'text-white' : 'text-ink'
           }`}
         >
           {body}
         </Text>
         <Text
-          className={`text-[11px] mt-1 text-right ${
+          className={`text-xs mt-1 text-right ${
             isBarber ? 'text-white/40' : 'text-ink/40'
           }`}
         >
@@ -41,4 +42,4 @@ export default function MessageBubble({
       </View>
     </View>
   );
-}
+});

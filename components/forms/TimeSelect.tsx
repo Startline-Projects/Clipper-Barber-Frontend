@@ -25,7 +25,7 @@ export default function TimeSelect({
     <View className="w-full">
       <Text
         style={vars({ '--ts-label': accent })}
-        className="text-[12px] font-semibold text-[--ts-label] tracking-[0.2px] uppercase mb-[6px]"
+        className="text-sm font-semibold text-[--ts-label] tracking-[0.2px] uppercase mb-[6px]"
       >
         {label}
       </Text>
@@ -41,7 +41,7 @@ export default function TimeSelect({
             : 'border-[1.5px] border-separator-opaque bg-surface'
         } active:opacity-70`}
       >
-        <Text className="text-[14px] font-semibold text-ink">
+        <Text className="text-md font-semibold text-ink">
           {value ? formatTime12(value) : placeholder}
         </Text>
         <Icon name="chevron" size={16} color={colors.tertiary} />

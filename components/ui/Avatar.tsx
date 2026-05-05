@@ -1,4 +1,5 @@
-import { Image, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/lib/hooks/useTheme';
 
@@ -37,6 +38,8 @@ export default function Avatar({ name, size = 40, uri }: AvatarProps) {
         <Image
           source={{ uri }}
           style={{ width: size, height: size }}
+          contentFit="cover"
+          transition={200}
         />
       </View>
     );

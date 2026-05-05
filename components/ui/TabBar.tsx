@@ -30,7 +30,7 @@ export default function TabBar({ tabs, active, onChange }: TabBarProps) {
           >
             <Text
               style={{ color: isActive ? colors.ink : colors.tertiary }}
-              className="text-[13px] font-semibold tracking-[-0.1px]"
+              className="text-base font-semibold tracking-[-0.1px]"
             >
               {tab}
             </Text>

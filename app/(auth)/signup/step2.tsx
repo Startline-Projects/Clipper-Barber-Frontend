@@ -175,7 +175,7 @@ export default function SignupStep2Screen() {
             onBack={() => router.back()}
             right={
               <Pressable onPress={handleSkip} hitSlop={8}>
-                <Text className="text-[14px] font-semibold text-tertiary tracking-[-0.1px]">
+                <Text className="text-md font-semibold text-tertiary tracking-[-0.1px]">
                   Skip
                 </Text>
               </Pressable>
@@ -193,11 +193,11 @@ export default function SignupStep2Screen() {
               />
             ))}
           </View>
-          <Text className="text-[11px] font-semibold text-tertiary tracking-[0.6px] uppercase mb-5">
+          <Text className="text-xs font-semibold text-tertiary tracking-[0.6px] uppercase mb-5">
             Step 2 of 3
           </Text>
 
-          <Text className="text-[22px] font-extrabold text-ink tracking-[-0.5px] mb-5">
+          <Text className="text-3xl font-extrabold text-ink tracking-[-0.5px] mb-5">
             Shop Details
           </Text>
 
@@ -315,10 +315,10 @@ export default function SignupStep2Screen() {
           </View>
 
           {/* Map picker */}
-          <Text className="text-[13px] font-semibold text-secondary tracking-[-0.1px] mb-[6px]">
+          <Text className="text-base font-semibold text-secondary tracking-[-0.1px] mb-[6px]">
             Pin your shop on the map
           </Text>
-          <Text className="text-[12px] text-tertiary leading-[17px] tracking-[-0.05px] mb-[10px]">
+          <Text className="text-sm text-tertiary leading-[17px] tracking-[-0.05px] mb-[10px]">
             Drop a pin so clients see exact directions. We'll save the lat/lng
             with your address.
           </Text>
@@ -333,7 +333,7 @@ export default function SignupStep2Screen() {
             }}
           />
           {errors.location && (
-            <Text className="text-[12px] text-red mt-1 tracking-[-0.1px]">
+            <Text className="text-sm text-red mt-1 tracking-[-0.1px]">
               {errors.location}
             </Text>
           )}

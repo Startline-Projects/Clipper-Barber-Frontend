@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
   Pressable,
+  RefreshControl,
   Text,
   TextInput,
   View,
@@ -41,8 +42,15 @@ export default function ClientsScreen() {
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('lastVisit');
 
-  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } =
+  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage, refetch } =
     useClients({ search: search.trim() || undefined, sortBy, order: 'desc' });
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
   const clients = data?.pages.flatMap((p) => p.clients) ?? [];
 
@@ -60,7 +68,7 @@ export default function ClientsScreen() {
             value={search}
             onChangeText={setSearch}
             placeholder="Search clients..."
-            className="flex-1 text-[15px] text-ink tracking-[-0.2px]"
+            className="flex-1 text-lg text-ink tracking-[-0.2px]"
             autoCapitalize="none"
             autoCorrect={false}
             returnKeyType="search"
@@ -86,7 +94,7 @@ export default function ClientsScreen() {
             }`}
           >
             <Text
-              className={`text-[12px] font-semibold ${
+              className={`text-sm font-semibold ${
                 sortBy === opt.value ? 'text-white' : 'text-ink'
               }`}
             >
@@ -100,6 +108,12 @@ export default function ClientsScreen() {
         data={clients}
         keyExtractor={(c) => c.clientId}
         contentContainerClassName="px-5 pb-8"
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.tertiary} />}
+        removeClippedSubviews={true}
+        initialNumToRender={15}
+        maxToRenderPerBatch={8}
+        windowSize={5}
+        updateCellsBatchingPeriod={50}
         onEndReached={() => {
           if (hasNextPage && !isFetchingNextPage) fetchNextPage();
         }}
@@ -116,7 +130,7 @@ export default function ClientsScreen() {
           !isLoading ? (
             <View className="items-center py-16">
               <Icon name="user" size={36} color={colors.quaternary} />
-              <Text className="text-[15px] text-tertiary mt-3">
+              <Text className="text-lg text-tertiary mt-3">
                 {search ? 'No matching clients' : 'No clients yet'}
               </Text>
             </View>
@@ -152,18 +166,18 @@ function ClientRow({
       />
       <View className="flex-1">
         <View className="flex-row items-center gap-2">
-          <Text className="text-[15px] font-semibold text-ink tracking-[-0.2px]">
+          <Text className="text-lg font-semibold text-ink tracking-[-0.2px]">
             {c.name}
           </Text>
           {c.isGuest && (
             <View className="px-[6px] py-[1px] rounded-xs bg-separator-opaque">
-              <Text className="text-[10px] font-bold text-tertiary tracking-[0.3px]">
+              <Text className="text-2xs font-bold text-tertiary tracking-[0.3px]">
                 GUEST
               </Text>
             </View>
           )}
         </View>
-        <Text className="text-[12px] text-tertiary mt-[2px]">
+        <Text className="text-sm text-tertiary mt-[2px]">
           {c.totalVisits} visits · {usd(c.totalSpendUsd)} · Last {shortDate(c.lastVisitAt)}
         </Text>
       </View>

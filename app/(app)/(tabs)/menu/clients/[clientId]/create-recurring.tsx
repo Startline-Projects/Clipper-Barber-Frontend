@@ -66,7 +66,7 @@ export default function CreateRecurringScreen() {
           <Header title="New Recurring" onBack={() => router.back()} />
 
           {client && (
-            <Text className="text-[14px] text-tertiary mb-lg">
+            <Text className="text-md text-tertiary mb-lg">
               Set up a recurring appointment for{' '}
               <Text className="font-semibold text-ink">{client.client.name}</Text>
             </Text>
@@ -74,7 +74,7 @@ export default function CreateRecurringScreen() {
 
           {/* Service */}
           <Card elevated>
-            <Text className="text-[13px] font-bold text-secondary tracking-[0.3px] uppercase mb-3">
+            <Text className="text-base font-bold text-secondary tracking-[0.3px] uppercase mb-3">
               Service
             </Text>
             {servicesLoading ? (
@@ -84,14 +84,14 @@ export default function CreateRecurringScreen() {
                 onPress={() => setShowServicePicker(true)}
                 className="flex-row items-center justify-between px-[10px] py-3 rounded-sm border-[1.5px] border-separator-opaque bg-surface"
               >
-                <Text className={`text-[14px] font-semibold ${selectedService ? 'text-ink' : 'text-tertiary'}`}>
+                <Text className={`text-md font-semibold ${selectedService ? 'text-ink' : 'text-tertiary'}`}>
                   {selectedService?.name ?? 'Select a service'}
                 </Text>
                 <Icon name="chevron" size={16} color={colors.tertiary} />
               </Pressable>
             )}
             {selectedService && (
-              <Text className="text-[12px] text-tertiary mt-2">
+              <Text className="text-sm text-tertiary mt-2">
                 {selectedService.durationMinutes}min ·{' '}
                 ${(selectedService.recurringPriceUsd ?? selectedService.regularPriceUsd).toFixed(0)}
                 {selectedService.recurringPriceUsd != null && ' (recurring rate)'}
@@ -101,7 +101,7 @@ export default function CreateRecurringScreen() {
 
           {/* Day */}
           <Card elevated>
-            <Text className="text-[13px] font-bold text-secondary tracking-[0.3px] uppercase mb-3">
+            <Text className="text-base font-bold text-secondary tracking-[0.3px] uppercase mb-3">
               Day of Week
             </Text>
             <View className="flex-row flex-wrap gap-2">
@@ -116,7 +116,7 @@ export default function CreateRecurringScreen() {
                   }`}
                 >
                   <Text
-                    className={`text-[13px] font-semibold ${
+                    className={`text-base font-semibold ${
                       dayOfWeek === i ? 'text-white' : 'text-ink'
                     }`}
                   >
@@ -139,7 +139,7 @@ export default function CreateRecurringScreen() {
 
           {/* Frequency */}
           <Card elevated>
-            <Text className="text-[13px] font-bold text-secondary tracking-[0.3px] uppercase mb-3">
+            <Text className="text-base font-bold text-secondary tracking-[0.3px] uppercase mb-3">
               Frequency
             </Text>
             <View className="flex-row gap-2">
@@ -154,7 +154,7 @@ export default function CreateRecurringScreen() {
                   }`}
                 >
                   <Text
-                    className={`text-[13px] font-semibold ${
+                    className={`text-base font-semibold ${
                       frequency === f.value ? 'text-white' : 'text-ink'
                     }`}
                   >
@@ -168,15 +168,15 @@ export default function CreateRecurringScreen() {
           {/* Summary */}
           {canSubmit && (
             <Card elevated className="bg-blue/6 border border-blue/20">
-              <Text className="text-[13px] font-bold text-blue tracking-[0.3px] uppercase mb-2">
+              <Text className="text-base font-bold text-blue tracking-[0.3px] uppercase mb-2">
                 Summary
               </Text>
-              <Text className="text-[14px] text-ink leading-[20px]">
+              <Text className="text-md text-ink leading-[20px]">
                 {selectedService.name} every{' '}
                 {frequency === 'biweekly' ? 'other ' : ''}
                 {DAY_LABELS[dayOfWeek!]} at {time}
               </Text>
-              <Text className="text-[14px] font-bold text-ink mt-1">
+              <Text className="text-md font-bold text-ink mt-1">
                 ${(selectedService.recurringPriceUsd ?? selectedService.regularPriceUsd).toFixed(0)}{' '}
                 per session
               </Text>
@@ -208,7 +208,7 @@ export default function CreateRecurringScreen() {
         >
           <Pressable className="bg-surface rounded-t-3xl px-5 pt-4 pb-8" onPress={() => {}}>
             <View className="w-10 h-1 rounded-full bg-separator-opaque self-center mb-[18px]" />
-            <Text className="text-[22px] font-extrabold text-ink tracking-[-0.5px] mb-4">
+            <Text className="text-3xl font-extrabold text-ink tracking-[-0.5px] mb-4">
               Select time
             </Text>
             <ScrollView className="max-h-[340px]">
@@ -250,7 +250,7 @@ export default function CreateRecurringScreen() {
         >
           <Pressable className="bg-surface rounded-t-3xl px-5 pt-4 pb-8" onPress={() => {}}>
             <View className="w-10 h-1 rounded-full bg-separator-opaque self-center mb-[18px]" />
-            <Text className="text-[22px] font-extrabold text-ink tracking-[-0.5px] mb-4">
+            <Text className="text-3xl font-extrabold text-ink tracking-[-0.5px] mb-4">
               Select service
             </Text>
             <ScrollView className="max-h-[340px]">
@@ -266,14 +266,14 @@ export default function CreateRecurringScreen() {
                   }`}
                 >
                   <Text
-                    className={`text-[15px] font-semibold ${
+                    className={`text-lg font-semibold ${
                       selectedService?.id === s.id ? 'text-white' : 'text-ink'
                     }`}
                   >
                     {s.name}
                   </Text>
                   <Text
-                    className={`text-[12px] mt-[2px] ${
+                    className={`text-sm mt-[2px] ${
                       selectedService?.id === s.id ? 'text-white/60' : 'text-tertiary'
                     }`}
                   >

@@ -61,7 +61,7 @@ export default function Btn({
         <Icon name={icon} size={16} color={colors[iconColorKey[variant]]} />
       )}
       <Text
-        className={`text-[15px] font-semibold tracking-[-0.2px] ${textStyles[variant]}`}
+        className={`text-lg font-semibold tracking-[-0.2px] ${textStyles[variant]}`}
       >
         {label}
       </Text>

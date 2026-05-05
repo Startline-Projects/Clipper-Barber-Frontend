@@ -1,8 +1,9 @@
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  RefreshControl,
   ScrollView,
   Text,
   TextInput,
@@ -23,8 +24,15 @@ import { useUpdateNoShowCharge } from '@/lib/hooks/useSettings';
 export default function NoShowSettingsScreen() {
   const router = useRouter();
   const colors = useColors();
-  const { data: profile, isLoading } = useProfile();
+  const { data: profile, isLoading, refetch } = useProfile();
   const update = useUpdateNoShowCharge();
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [amount, setAmount] = useState('');
@@ -82,7 +90,7 @@ export default function NoShowSettingsScreen() {
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView className="flex-1 px-5" keyboardShouldPersistTaps="handled">
+        <ScrollView className="flex-1 px-5" keyboardShouldPersistTaps="handled" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.tertiary} />}>
           <Header title="No-Show Charge" onBack={() => router.back()} />
 
           <Card elevated>
@@ -99,7 +107,7 @@ export default function NoShowSettingsScreen() {
 
           {isEnabled && (
             <Card elevated>
-              <Text className="text-[13px] font-bold text-secondary tracking-[0.3px] uppercase mb-3">
+              <Text className="text-base font-bold text-secondary tracking-[0.3px] uppercase mb-3">
                 Charge Amount
               </Text>
               <TextField
@@ -116,11 +124,11 @@ export default function NoShowSettingsScreen() {
               <View className="mt-4 p-3 rounded-md bg-orange/8 border border-orange/20">
                 <View className="flex-row items-center gap-2 mb-1">
                   <Icon name="info" size={14} color={colors.orange} />
-                  <Text className="text-[13px] font-semibold text-orange">
+                  <Text className="text-base font-semibold text-orange">
                     Requires Stripe
                   </Text>
                 </View>
-                <Text className="text-[12px] text-secondary leading-[17px]">
+                <Text className="text-sm text-secondary leading-[17px]">
                   No-show charges are processed through your connected Stripe account. Make sure Stripe is set up in Payments & Payouts.
                 </Text>
               </View>

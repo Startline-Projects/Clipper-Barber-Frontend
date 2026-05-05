@@ -1,7 +1,9 @@
-import { Tabs, useRouter } from 'expo-router';
+import { Tabs } from 'expo-router';
 import { View, Text } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import Icon, { type IconName } from '@/components/ui/Icon';
 import { useColors } from '@/lib/theme/colors';
+import { useUnreadCount } from '@/lib/hooks/useNotifications';
 
 const tabs: { name: string; title: string; icon: IconName; root: string }[] = [
   { name: 'today', title: 'Today', icon: 'home', root: '/(app)/(tabs)/today' },
@@ -38,11 +40,12 @@ function TabIcon({
 
 export default function TabsLayout() {
   const colors = useColors();
-  const router = useRouter();
+  const { data: unreadCount } = useUnreadCount();
 
   return (
     <Tabs
       screenOptions={{
+        lazy: true,
         headerShown: false,
         tabBarActiveTintColor: colors.blue,
         tabBarInactiveTintColor: colors.tertiary,
@@ -65,13 +68,17 @@ export default function TabsLayout() {
           options={{
             title: tab.title,
             tabBarIcon: ({ color, focused }) => (
-              <TabIcon icon={tab.icon} color={color} focused={focused} />
+              <TabIcon
+                icon={tab.icon}
+                color={color}
+                focused={focused}
+                badge={tab.name === 'messages' ? (unreadCount ?? 0) : undefined}
+              />
             ),
           }}
           listeners={{
-            tabPress: (e) => {
-              e.preventDefault();
-              router.replace(tab.root as any);
+            tabPress: () => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             },
           }}
         />

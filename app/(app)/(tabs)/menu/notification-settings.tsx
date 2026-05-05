@@ -1,4 +1,5 @@
-import { ActivityIndicator, ScrollView, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { ActivityIndicator, RefreshControl, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '@/components/ui/Header';
@@ -15,8 +16,15 @@ import { toast } from '@/lib/stores/toast';
 export default function NotificationSettingsScreen() {
   const router = useRouter();
   const colors = useColors();
-  const { data, isLoading } = useNotificationSettings();
+  const { data, isLoading, refetch } = useNotificationSettings();
   const update = useUpdateNotificationSettings();
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
   if (isLoading || !data) {
     return (
@@ -40,7 +48,7 @@ export default function NotificationSettingsScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-bg" edges={['top']}>
-      <ScrollView className="flex-1 px-5">
+      <ScrollView className="flex-1 px-5" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.tertiary} />}>
         <Header title="Notifications" onBack={() => router.back()} />
 
         <Card elevated>
