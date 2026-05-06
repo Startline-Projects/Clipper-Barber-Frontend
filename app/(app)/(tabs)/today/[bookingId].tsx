@@ -8,7 +8,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useSegments } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '@/components/ui/Header';
 import Card from '@/components/ui/Card';
@@ -52,6 +52,7 @@ function formatDateTime(iso: string) {
 export default function BookingDetailScreen() {
   const { bookingId } = useLocalSearchParams<{ bookingId: string }>();
   const router = useRouter();
+  const segments = useSegments() as string[];
   const colors = useColors();
   const cancelMut = useCancelBooking();
   const noShowMut = useNoShowBooking();
@@ -61,11 +62,25 @@ export default function BookingDetailScreen() {
   const { data, isLoading } = useBookingDetail(bookingId ?? '');
   const b = data?.booking;
 
+  // This screen is re-exported into today/, bookings/, and calendar/ tabs.
+  // Route back to the list of whichever tab we're currently on, since the
+  // tab-press listener uses router.replace and can leave the in-tab stack empty.
+  const goBack = () => {
+    const tab = segments.find((s) => s === 'bookings' || s === 'calendar' || s === 'today');
+    if (tab) {
+      router.replace(`/(app)/(tabs)/${tab}` as any);
+    } else if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(app)/(tabs)/today');
+    }
+  };
+
   if (isLoading || !b) {
     return (
       <SafeAreaView className="flex-1 bg-bg">
         <View className="px-5">
-          <Header title="" onBack={() => router.back()} />
+          <Header title="" onBack={goBack} />
         </View>
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator color={colors.tertiary} />
@@ -84,7 +99,7 @@ export default function BookingDetailScreen() {
           cancelMut.mutate(b.id, {
             onSuccess: () => {
               toast.success('Booking cancelled');
-              router.back();
+              goBack();
             },
           }),
       },
@@ -114,7 +129,7 @@ export default function BookingDetailScreen() {
             ? `No-show recorded · $${b.noShowChargeAmountUsd} charged`
             : 'No-show recorded',
         );
-        router.back();
+        goBack();
       },
     });
   };
@@ -129,7 +144,7 @@ export default function BookingDetailScreen() {
   return (
     <SafeAreaView className="flex-1 bg-bg" edges={['top']}>
       <ScrollView className="flex-1 px-5">
-        <Header title="" onBack={() => router.back()} />
+        <Header title="" onBack={goBack} />
 
         {/* Client header */}
         <View className="items-center pb-6">
