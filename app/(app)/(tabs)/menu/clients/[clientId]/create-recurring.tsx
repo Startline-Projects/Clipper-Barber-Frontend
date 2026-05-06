@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -11,20 +11,32 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/ui/Header';
 import Card from '@/components/ui/Card';
 import Btn from '@/components/ui/Btn';
 import Icon from '@/components/ui/Icon';
-import TimeSelect, { generateTimeSlots } from '@/components/forms/TimeSelect';
+import TimeSelect from '@/components/forms/TimeSelect';
 import { useColors } from '@/lib/theme/colors';
 import { useServices } from '@/lib/hooks/useServices';
 import { useClientDetail } from '@/lib/hooks/useClients';
+import { useBarberRecurringSlots } from '@/lib/hooks/useRecurring';
 import { toast } from '@/lib/stores/toast';
+import { invalidations } from '@/lib/hooks/invalidations';
+import { createArrangement } from '@/lib/api/recurringArrangements';
+import type { ApiError } from '@/lib/api/client';
 import type { Service } from '@/lib/api/services';
+
+function todayLocalISODate(): string {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
 
 const DAY_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const TIME_SLOTS = generateTimeSlots(6, 23, 30);
 const FREQUENCIES = [
   { value: 'weekly', label: 'Weekly' },
   { value: 'biweekly', label: 'Biweekly' },
@@ -46,14 +58,59 @@ export default function CreateRecurringScreen() {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showServicePicker, setShowServicePicker] = useState(false);
 
+  const slotsQuery = useBarberRecurringSlots(
+    selectedService ? [selectedService.id] : [],
+    dayOfWeek,
+  );
+  const slotsData = slotsQuery.data;
+  const slots = slotsData?.slots ?? [];
+  const allowedFrequencies = slotsData?.recurringFrequencyOptions ?? ['weekly', 'biweekly'];
+  const recurringAvailable = slotsData?.recurringAvailable ?? true;
+
+  useEffect(() => {
+    setTime(null);
+  }, [selectedService?.id, dayOfWeek]);
+
+  useEffect(() => {
+    if (!slotsData) return;
+    if (!allowedFrequencies.includes(frequency) && allowedFrequencies.length > 0) {
+      setFrequency(allowedFrequencies[0]);
+    }
+  }, [slotsData, allowedFrequencies, frequency]);
+
+  const qc = useQueryClient();
+  const createMutation = useMutation({
+    mutationFn: createArrangement,
+    onSuccess: () => {
+      invalidations.recurringMutated(qc, '');
+      toast.success('Recurring offer sent to client');
+      router.back();
+    },
+    onError: (err: ApiError) => {
+      if (err.status === 409 && err.code === 'arrangement_has_conflicts') {
+        toast.error('That slot conflicts with existing bookings');
+        return;
+      }
+      toast.error(err.message ?? 'Failed to create recurring arrangement');
+    },
+  });
+
   const activeServices = services?.filter((s) => s.isActive) ?? [];
   const canSubmit = selectedService && dayOfWeek !== null && time;
 
   const handleCreate = () => {
-    if (!canSubmit) return;
-    toast.info(
-      'Creating recurring arrangements from the barber side is coming soon.',
-    );
+    if (!canSubmit || !clientId) return;
+    createMutation.mutate({
+      clientId,
+      services: [
+        { barberServiceId: selectedService.id, bookingType: 'regular' },
+      ],
+      dayOfWeek: dayOfWeek!,
+      timeOfDay: time,
+      frequency,
+      startDate: todayLocalISODate(),
+      endType: 'none',
+    });
   };
 
   return (
@@ -132,9 +189,45 @@ export default function CreateRecurringScreen() {
             <TimeSelect
               label="Time Slot"
               value={time ?? undefined}
-              onPress={() => setShowTimePicker(true)}
-              placeholder="Select time"
+              onPress={() => {
+                if (!selectedService) {
+                  toast.error('Select a service first');
+                  return;
+                }
+                if (dayOfWeek === null) {
+                  toast.error('Select a day first');
+                  return;
+                }
+                setShowTimePicker(true);
+              }}
+              placeholder={
+                !selectedService || dayOfWeek === null
+                  ? 'Select service & day first'
+                  : 'Select time'
+              }
             />
+            {selectedService && dayOfWeek !== null && (
+              <>
+                {slotsQuery.isLoading && (
+                  <View className="flex-row items-center mt-2">
+                    <ActivityIndicator size="small" color={colors.tertiary} />
+                    <Text className="text-sm text-tertiary ml-2">
+                      Loading availability…
+                    </Text>
+                  </View>
+                )}
+                {slotsData && !recurringAvailable && (
+                  <Text className="text-sm text-red mt-2">
+                    Recurring not available on {DAY_LABELS[dayOfWeek]} for this service.
+                  </Text>
+                )}
+                {slotsData && recurringAvailable && slots.length === 0 && (
+                  <Text className="text-sm text-tertiary mt-2">
+                    No working hours configured for {DAY_LABELS[dayOfWeek]}.
+                  </Text>
+                )}
+              </>
+            )}
           </Card>
 
           {/* Frequency */}
@@ -143,25 +236,31 @@ export default function CreateRecurringScreen() {
               Frequency
             </Text>
             <View className="flex-row gap-2">
-              {FREQUENCIES.map((f) => (
-                <Pressable
-                  key={f.value}
-                  onPress={() => setFrequency(f.value)}
-                  className={`flex-1 py-[10px] rounded-sm items-center border-[1.5px] ${
-                    frequency === f.value
-                      ? 'border-green bg-green'
-                      : 'border-separator-opaque bg-surface'
-                  }`}
-                >
-                  <Text
-                    className={`text-base font-semibold ${
-                      frequency === f.value ? 'text-white' : 'text-ink'
+              {FREQUENCIES.map((f) => {
+                const disabled = !allowedFrequencies.includes(f.value);
+                return (
+                  <Pressable
+                    key={f.value}
+                    disabled={disabled}
+                    onPress={() => setFrequency(f.value)}
+                    className={`flex-1 py-[10px] rounded-sm items-center border-[1.5px] ${
+                      frequency === f.value
+                        ? 'border-green bg-green'
+                        : disabled
+                        ? 'border-separator-opaque bg-bg opacity-40'
+                        : 'border-separator-opaque bg-surface'
                     }`}
                   >
-                    {f.label}
-                  </Text>
-                </Pressable>
-              ))}
+                    <Text
+                      className={`text-base font-semibold ${
+                        frequency === f.value ? 'text-white' : 'text-ink'
+                      }`}
+                    >
+                      {f.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
           </Card>
 
@@ -184,10 +283,10 @@ export default function CreateRecurringScreen() {
           )}
 
           <Btn
-            label="Create Recurring"
+            label={createMutation.isPending ? 'Creating...' : 'Create Recurring'}
             full
             onPress={handleCreate}
-            disabled={!canSubmit}
+            disabled={!canSubmit || createMutation.isPending}
           />
           <View className="mt-2 mb-8">
             <Btn label="Cancel" variant="ghost" full onPress={() => router.back()} />
@@ -208,30 +307,57 @@ export default function CreateRecurringScreen() {
         >
           <Pressable className="bg-surface rounded-t-3xl px-5 pt-4 pb-8" onPress={() => {}}>
             <View className="w-10 h-1 rounded-full bg-separator-opaque self-center mb-[18px]" />
-            <Text className="text-3xl font-extrabold text-ink tracking-[-0.5px] mb-4">
+            <Text className="text-3xl font-extrabold text-ink tracking-[-0.5px] mb-1">
               Select time
             </Text>
+            {dayOfWeek !== null && (
+              <Text className="text-sm text-tertiary mb-4">
+                {DAY_LABELS[dayOfWeek]} · taken slots are disabled
+              </Text>
+            )}
             <ScrollView className="max-h-[340px]">
-              {TIME_SLOTS.map((slot) => (
-                <Pressable
-                  key={slot}
-                  onPress={() => {
-                    setTime(slot);
-                    setShowTimePicker(false);
-                  }}
-                  className={`py-[14px] px-4 rounded-md mb-1 ${
-                    time === slot ? 'bg-green' : 'active:bg-bg'
-                  }`}
-                >
-                  <Text
-                    className={`text-[16px] font-semibold ${
-                      time === slot ? 'text-white' : 'text-ink'
+              {slots.length === 0 && (
+                <Text className="text-md text-tertiary text-center py-6">
+                  No slots for this day.
+                </Text>
+              )}
+              {slots.map((slot) => {
+                const selected = time === slot.time;
+                return (
+                  <Pressable
+                    key={slot.time}
+                    disabled={!slot.available}
+                    onPress={() => {
+                      setTime(slot.time);
+                      setShowTimePicker(false);
+                    }}
+                    className={`flex-row items-center justify-between py-[14px] px-4 rounded-md mb-1 ${
+                      selected
+                        ? 'bg-green'
+                        : slot.available
+                        ? 'active:bg-bg'
+                        : 'bg-bg opacity-50'
                     }`}
                   >
-                    {slot}
-                  </Text>
-                </Pressable>
-              ))}
+                    <Text
+                      className={`text-[16px] font-semibold ${
+                        selected
+                          ? 'text-white'
+                          : slot.available
+                          ? 'text-ink'
+                          : 'text-tertiary line-through'
+                      }`}
+                    >
+                      {slot.time}
+                    </Text>
+                    {!slot.available && (
+                      <Text className="text-xs font-bold text-tertiary tracking-[0.3px] uppercase">
+                        Taken
+                      </Text>
+                    )}
+                  </Pressable>
+                );
+              })}
             </ScrollView>
           </Pressable>
         </Pressable>

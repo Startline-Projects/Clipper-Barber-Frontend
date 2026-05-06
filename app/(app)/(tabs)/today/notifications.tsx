@@ -66,7 +66,9 @@ export default function NotificationsScreen() {
   const handlePress = (n: Notification) => {
     if (!n.isRead) markRead.mutate(n.id);
 
-    if (n.bookingId) {
+    if (n.recurringBookingId) {
+      router.push(`/(app)/(tabs)/bookings/recurring/${n.recurringBookingId}`);
+    } else if (n.bookingId) {
       router.push(`/(app)/(tabs)/today/${n.bookingId}`);
     } else if (n.conversationId) {
       router.push(`/(app)/(tabs)/messages/${n.conversationId}`);

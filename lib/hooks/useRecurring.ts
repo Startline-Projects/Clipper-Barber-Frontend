@@ -30,6 +30,23 @@ export function useRecurringBookings(filters: RecurringFilters) {
   });
 }
 
+export function useBarberRecurringSlots(
+  serviceIds: string[],
+  dayOfWeek: number | null,
+) {
+  const enabled = serviceIds.length > 0 && dayOfWeek !== null;
+  return useQuery({
+    queryKey: queryKeys.recurring.slots(serviceIds, dayOfWeek ?? -1),
+    queryFn: ({ signal }) =>
+      recurringApi.getBarberRecurringSlots(
+        { serviceIds, dayOfWeek: dayOfWeek as number },
+        { signal },
+      ),
+    enabled,
+    staleTime: 30_000,
+  });
+}
+
 export function useRecurringDetail(recurringId: string) {
   return useQuery({
     queryKey: queryKeys.recurring.detail(recurringId),

@@ -13,6 +13,7 @@ const RecurringListItemSchema = z.object({
   id: z.string(),
   status: RecurringStatus,
   isRenewal: z.boolean(),
+  originalRecurringBookingId: z.string().nullable().optional(),
   dayOfWeek: z.number(),
   slotTime: z.string(),
   frequency: RecurringFrequency,
@@ -107,7 +108,37 @@ function extractPayload<T>(res: unknown): T {
   return res as T;
 }
 
+const RecurringSlotsResponseSchema = z.object({
+  dayOfWeek: z.number(),
+  recurringAvailable: z.boolean(),
+  recurringFrequencyOptions: z.array(z.enum(['weekly', 'biweekly'])),
+  recurringPriceUsd: z.number().nullable(),
+  totalDurationMinutes: z.number(),
+  slots: z.array(z.object({ time: z.string(), available: z.boolean() })),
+});
+
+export type RecurringSlotsResponse = z.infer<typeof RecurringSlotsResponseSchema>;
+
+export interface GetRecurringSlotsParams {
+  serviceIds: string[];
+  dayOfWeek: number;
+}
+
 // ---------- Endpoints ----------
+
+export async function getBarberRecurringSlots(
+  params: GetRecurringSlotsParams,
+  opts: RequestOptions = {},
+): Promise<RecurringSlotsResponse> {
+  const { data: res } = await apiClient.get('/barber/recurring-slots', {
+    params: {
+      serviceIds: params.serviceIds.join(','),
+      dayOfWeek: params.dayOfWeek,
+    },
+    signal: opts.signal,
+  });
+  return RecurringSlotsResponseSchema.parse(extractPayload(res));
+}
 
 export async function listRecurring(
   params: ListRecurringParams,

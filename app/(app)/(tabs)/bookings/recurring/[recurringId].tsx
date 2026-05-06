@@ -6,7 +6,6 @@ import {
   Pressable,
   ScrollView,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -50,7 +49,6 @@ export default function RecurringDetailScreen() {
   const cancel = useCancelRecurring();
 
   const [pauseDrawer, setPauseDrawer] = useState(false);
-  const [pauseNote, setPauseNote] = useState('');
 
   if (isLoading) {
     return (
@@ -115,11 +113,11 @@ export default function RecurringDetailScreen() {
   };
 
   const handlePause = () => {
-    const now = new Date();
+    const today = new Date().toISOString().split('T')[0];
     pause.mutate(
       {
         recurringId: r.id,
-        body: { pauseStartDate: now.toISOString() },
+        body: { pauseStartDate: today },
       },
       {
         onSuccess: () => {

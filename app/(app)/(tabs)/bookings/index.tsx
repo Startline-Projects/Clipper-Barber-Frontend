@@ -212,6 +212,11 @@ export default function BookingsScreen() {
           isLoading={recurringQuery.isLoading}
           refreshing={refreshing}
           onRefresh={onRefresh}
+          isFetchingNextPage={recurringQuery.isFetchingNextPage}
+          onEndReached={() => {
+            if (recurringQuery.hasNextPage && !recurringQuery.isFetchingNextPage)
+              recurringQuery.fetchNextPage();
+          }}
           onPress={(id) =>
             router.push(`/(app)/(tabs)/bookings/recurring/${id}`)
           }
@@ -298,6 +303,8 @@ function RecurringTab({
   isLoading,
   refreshing,
   onRefresh,
+  isFetchingNextPage,
+  onEndReached,
   onPress,
 }: {
   sub: string;
@@ -306,6 +313,8 @@ function RecurringTab({
   isLoading: boolean;
   refreshing: boolean;
   onRefresh: () => void;
+  isFetchingNextPage: boolean;
+  onEndReached: () => void;
   onPress: (id: string) => void;
 }) {
   const colors = useColors();
@@ -345,6 +354,13 @@ function RecurringTab({
           keyExtractor={(r) => r.id}
           contentContainerClassName="px-5"
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.tertiary} />}
+          onEndReached={onEndReached}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            isFetchingNextPage ? (
+              <ActivityIndicator className="py-4" color={colors.tertiary} />
+            ) : null
+          }
           renderItem={({ item: r }) => (
             <Card elevated onPress={() => onPress(r.id)}>
               <View className="flex-row items-center gap-3">

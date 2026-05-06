@@ -252,6 +252,15 @@ export default function ProfileScreen() {
 
   const pickFromLibrary = async () => {
     setPhotoPicker(false);
+    // Wait for the host Modal's slide-out animation before presenting the
+    // system picker. Presenting while another modal is dismissing causes the
+    // picker to silently no-op on both iOS and Android.
+    await new Promise((r) => setTimeout(r, Platform.OS === 'ios' ? 400 : 250));
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      toast.error('Photo library permission is required');
+      return;
+    }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
@@ -267,8 +276,12 @@ export default function ProfileScreen() {
 
   const takePhoto = async () => {
     setPhotoPicker(false);
+    await new Promise((r) => setTimeout(r, Platform.OS === 'ios' ? 400 : 250));
     const perm = await ImagePicker.requestCameraPermissionsAsync();
-    if (!perm.granted) return;
+    if (!perm.granted) {
+      toast.error('Camera permission is required');
+      return;
+    }
     const result = await ImagePicker.launchCameraAsync({
       allowsEditing: true,
       aspect: [1, 1],

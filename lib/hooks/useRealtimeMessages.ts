@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { z } from 'zod';
 import { supabase } from '@/lib/utils/supabase-client';
+import { useAuthStore } from '@/lib/stores/auth.store';
 import { queryKeys } from './queryKeys';
 import { invalidations } from './invalidations';
 import { SenderRole } from '@/lib/schemas/enums';
@@ -30,9 +31,15 @@ function toMessage(row: z.infer<typeof RealtimeMessageSchema>): Message {
 
 export function useRealtimeMessages(conversationId: string | undefined) {
   const qc = useQueryClient();
+  const accessToken = useAuthStore((s) => s.accessToken);
 
   useEffect(() => {
-    if (!conversationId) return;
+    if (!conversationId || !accessToken) return;
+
+    // RLS on `messages` requires the realtime socket to authenticate as the
+    // signed-in user. The Supabase client is configured with persistSession:false,
+    // so push the backend-issued JWT into the realtime layer explicitly.
+    supabase.realtime.setAuth(accessToken);
 
     const channel = supabase
       .channel(`messages:${conversationId}`)
@@ -82,5 +89,5 @@ export function useRealtimeMessages(conversationId: string | undefined) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [conversationId, qc]);
+  }, [conversationId, accessToken, qc]);
 }

@@ -103,6 +103,8 @@ export const queryKeys = {
       [...queryKeys.recurring.lists(), filters] as const,
     details: () => [...queryKeys.recurring.all, 'detail'] as const,
     detail: (id: string) => [...queryKeys.recurring.details(), id] as const,
+    slots: (serviceIds: string[], dayOfWeek: number) =>
+      [...queryKeys.recurring.all, 'slots', [...serviceIds].sort().join(','), dayOfWeek] as const,
   },
 
   reviews: {

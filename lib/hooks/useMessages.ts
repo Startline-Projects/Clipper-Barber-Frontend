@@ -22,9 +22,10 @@ export function useMessages(conversationId: string) {
     refetchOnWindowFocus: false,
     select: (data) => ({
       ...data,
-      // Flatten + reverse: API returns oldest-first per page, but RN
-      // inverted FlatList expects newest-first. Reverse so index 0 = newest.
-      messages: data.pages.flatMap((p) => p.messages).reverse(),
+      // API returns each page oldest-first; pages are ordered newest-page-first
+      // (cursor `before` walks backwards). Reverse within each page so the
+      // inverted FlatList gets a flat newest→oldest stream across page boundaries.
+      messages: data.pages.flatMap((p) => [...p.messages].reverse()),
     }),
   });
 }

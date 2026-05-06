@@ -17,6 +17,7 @@ import Icon from '@/components/ui/Icon';
 import { useColors } from '@/lib/theme/colors';
 import { useConversations } from '@/lib/hooks/useConversations';
 import { useMessages, useSendMessage } from '@/lib/hooks/useMessages';
+import { useRealtimeMessages } from '@/lib/hooks/useRealtimeMessages';
 import { toast } from '@/lib/stores/toast';
 import { getReadableError } from '@/lib/utils/get-readable-error';
 import type { Message } from '@/lib/api/conversations';
@@ -60,6 +61,7 @@ export default function ConversationScreen() {
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } =
     useMessages(conversationId ?? '');
   const sendMut = useSendMessage(conversationId ?? '');
+  useRealtimeMessages(conversationId);
 
   const messages = data?.messages ?? [];
 

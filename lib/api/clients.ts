@@ -44,7 +44,6 @@ const ClientBookingSchema = z.object({
 			durationMinutes: z.number(),
 			bookingType: BookingType,
 			priceUsd: z.number(),
-			type: ServiceType,
 		}),
 	),
 	totalPriceUsd: z.number(),
