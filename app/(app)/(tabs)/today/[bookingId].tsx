@@ -149,7 +149,7 @@ export default function BookingDetailScreen() {
         {/* Client header */}
         <View className="items-center pb-6">
           <Avatar name={b.client.name} size={64} />
-          <Text className="text-[22px] font-bold text-ink tracking-[-0.5px] mt-3 mb-[6px]">
+          <Text className="text-3xl font-bold text-ink tracking-[-0.5px] mt-3 mb-[6px]">
             {b.client.name}
           </Text>
           <View className="flex-row gap-[6px]">
@@ -170,15 +170,15 @@ export default function BookingDetailScreen() {
                 i > 0 ? 'border-t border-separator' : ''
               }`}
             >
-              <Text className="text-[14px] text-tertiary">{label}</Text>
-              <Text className="text-[15px] font-semibold text-ink tracking-[-0.2px]">
+              <Text className="text-md text-tertiary">{label}</Text>
+              <Text className="text-lg font-semibold text-ink tracking-[-0.2px]">
                 {value}
               </Text>
             </View>
           ))}
           <View className="flex-row justify-between py-[10px] border-t border-separator">
-            <Text className="text-[14px] text-tertiary">Price</Text>
-            <Text className="text-[22px] font-extrabold text-ink tracking-[-0.5px]">
+            <Text className="text-md text-tertiary">Price</Text>
+            <Text className="text-3xl font-extrabold text-ink tracking-[-0.5px]">
               ${b.pricing.totalPrice}
             </Text>
           </View>
@@ -236,10 +236,10 @@ export default function BookingDetailScreen() {
             <View className="w-14 h-14 rounded-full bg-red/10 items-center justify-center self-center mb-[14px]">
               <Icon name="alert" size={28} color={colors.red} />
             </View>
-            <Text className="text-[22px] font-extrabold text-ink tracking-[-0.5px] text-center">
+            <Text className="text-3xl font-extrabold text-ink tracking-[-0.5px] text-center">
               Charge no-show fee?
             </Text>
-            <Text className="text-[14px] text-secondary text-center leading-[20px] tracking-[-0.1px] mt-2 mb-[18px] px-2">
+            <Text className="text-md text-secondary text-center leading-[20px] tracking-[-0.1px] mt-2 mb-[18px] px-2">
               {b.noShowChargeAmountUsd
                 ? `$${b.noShowChargeAmountUsd} will be charged to ${b.client.name}'s saved card via Stripe. They'll get an automatic receipt.`
                 : `${b.client.name} will be marked as a no-show.`}

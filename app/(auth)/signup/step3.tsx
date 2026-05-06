@@ -121,7 +121,7 @@ export default function SignupStep3Screen() {
             onBack={() => router.back()}
             right={
               <Pressable onPress={handleSkip} hitSlop={8}>
-                <Text className="text-[14px] font-semibold text-tertiary tracking-[-0.1px]">
+                <Text className="text-md font-semibold text-tertiary tracking-[-0.1px]">
                   Skip
                 </Text>
               </Pressable>
@@ -137,11 +137,11 @@ export default function SignupStep3Screen() {
               />
             ))}
           </View>
-          <Text className="text-[11px] font-semibold text-tertiary tracking-[0.6px] uppercase mb-5">
+          <Text className="text-xs font-semibold text-tertiary tracking-[0.6px] uppercase mb-5">
             Step 3 of 3
           </Text>
 
-          <Text className="text-[22px] font-extrabold text-ink tracking-[-0.5px] mb-6">
+          <Text className="text-3xl font-extrabold text-ink tracking-[-0.5px] mb-6">
             Your Profile
           </Text>
 
@@ -171,7 +171,7 @@ export default function SignupStep3Screen() {
               )}
             </Pressable>
             <Pressable onPress={pickImage} className="mt-[10px]">
-              <Text className="text-[13px] text-tertiary font-medium tracking-[-0.1px]">
+              <Text className="text-base text-tertiary font-medium tracking-[-0.1px]">
                 {photo ? 'Change photo' : 'Add a profile photo'}
               </Text>
             </Pressable>
@@ -229,7 +229,7 @@ export default function SignupStep3Screen() {
             </View>
           </View>
 
-          <Text className="text-[12px] text-quaternary text-center mb-8 tracking-[-0.1px]">
+          <Text className="text-sm text-quaternary text-center mb-8 tracking-[-0.1px]">
             Free forever — no fees, no commission
           </Text>
         </ScrollView>

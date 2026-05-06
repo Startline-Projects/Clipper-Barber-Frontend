@@ -72,7 +72,7 @@ export default function RecurringDetailScreen() {
           <Header title="Recurring" onBack={() => router.back()} />
         </View>
         <View className="flex-1 items-center justify-center px-8">
-          <Text className="text-[15px] text-tertiary text-center">
+          <Text className="text-lg text-tertiary text-center">
             {getReadableError(error)}
           </Text>
         </View>
@@ -168,7 +168,7 @@ export default function RecurringDetailScreen() {
         {/* Client + status */}
         <View className="items-center pb-4">
           <Avatar name={r.client.name} size={64} />
-          <Text className="text-[20px] font-bold text-ink tracking-[-0.4px] mt-3">
+          <Text className="text-2xl font-bold text-ink tracking-[-0.4px] mt-3">
             {r.client.name}
           </Text>
           <View className="flex-row items-center gap-2 mt-2">
@@ -184,7 +184,7 @@ export default function RecurringDetailScreen() {
               }`}
             >
               <Text
-                className={`text-[11px] font-bold tracking-[0.3px] ${
+                className={`text-xs font-bold tracking-[0.3px] ${
                   isActive
                     ? 'text-green'
                     : isPaused
@@ -199,7 +199,7 @@ export default function RecurringDetailScreen() {
             </View>
             {r.isRenewal && (
               <View className="px-[8px] py-[3px] rounded-xs bg-purple/12">
-                <Text className="text-[11px] font-bold text-purple tracking-[0.3px]">
+                <Text className="text-xs font-bold text-purple tracking-[0.3px]">
                   RENEWAL
                 </Text>
               </View>
@@ -313,7 +313,7 @@ export default function RecurringDetailScreen() {
                       : ''
                   }`}
                 >
-                  <Text className="text-[14px] text-ink font-medium">
+                  <Text className="text-md text-ink font-medium">
                     {formatDate(occ.scheduledAt)}
                   </Text>
                   <StatusBadge status={occ.status} />
@@ -336,7 +336,7 @@ export default function RecurringDetailScreen() {
                       : ''
                   }`}
                 >
-                  <Text className="text-[14px] text-tertiary">
+                  <Text className="text-md text-tertiary">
                     {formatDate(occ.scheduledAt)}
                   </Text>
                   <StatusBadge status={occ.status} />
@@ -362,21 +362,21 @@ export default function RecurringDetailScreen() {
         >
           <Pressable className="bg-surface rounded-t-3xl px-5 pt-4 pb-8" onPress={() => {}}>
             <View className="w-10 h-1 rounded-full bg-separator-opaque self-center mb-[18px]" />
-            <Text className="text-[22px] font-extrabold text-ink tracking-[-0.5px]">
+            <Text className="text-3xl font-extrabold text-ink tracking-[-0.5px]">
               Pause Recurring
             </Text>
-            <Text className="text-[13px] text-secondary mt-1 mb-4">
+            <Text className="text-base text-secondary mt-1 mb-4">
               Pause this arrangement starting today. The client will be notified.
             </Text>
 
             <View className="p-3 rounded-md bg-orange/8 border border-orange/20 mb-4">
               <View className="flex-row items-center gap-2 mb-1">
                 <Icon name="alert" size={14} color={colors.orange} />
-                <Text className="text-[13px] font-semibold text-orange">
+                <Text className="text-base font-semibold text-orange">
                   Upcoming bookings will be skipped
                 </Text>
               </View>
-              <Text className="text-[12px] text-secondary leading-[17px]">
+              <Text className="text-sm text-secondary leading-[17px]">
                 No new bookings will be created until the arrangement is resumed.
               </Text>
             </View>
@@ -413,9 +413,9 @@ function DetailRow({
 }) {
   return (
     <View className="flex-row items-center justify-between py-[11px]">
-      <Text className="text-[14px] text-secondary">{label}</Text>
+      <Text className="text-md text-secondary">{label}</Text>
       <Text
-        className={`text-[14px] tracking-[-0.1px] ${
+        className={`text-md tracking-[-0.1px] ${
           bold ? 'font-bold text-[16px]' : 'font-semibold'
         } text-ink`}
       >

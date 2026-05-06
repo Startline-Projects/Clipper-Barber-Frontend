@@ -92,7 +92,7 @@ export default function ForgotPasswordScreen() {
 
           {!sent ? (
             <>
-              <Text className="text-[14px] text-secondary leading-[20px] tracking-[-0.1px] mt-1 mb-6">
+              <Text className="text-md text-secondary leading-[20px] tracking-[-0.1px] mt-1 mb-6">
                 Enter the email you signed up with. We'll send a link to reset
                 your password.
               </Text>
@@ -129,10 +129,10 @@ export default function ForgotPasswordScreen() {
               <View className="w-14 h-14 rounded-full bg-green/10 items-center justify-center mb-4">
                 <Icon name="check" size={28} color={colors.green} />
               </View>
-              <Text className="text-[18px] font-bold text-ink tracking-[-0.3px] mb-2">
+              <Text className="text-xl font-bold text-ink tracking-[-0.3px] mb-2">
                 Check your email
               </Text>
-              <Text className="text-[14px] text-secondary text-center leading-[20px] tracking-[-0.1px] mb-8 px-4">
+              <Text className="text-md text-secondary text-center leading-[20px] tracking-[-0.1px] mb-8 px-4">
                 If an account exists for {email.trim().toLowerCase()}, we sent a
                 password reset link. Check your inbox and spam folder.
               </Text>

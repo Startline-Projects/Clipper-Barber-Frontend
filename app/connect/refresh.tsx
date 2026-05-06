@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { ActivityIndicator, Linking, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,8 +9,11 @@ export default function StripeRefreshScreen() {
   const router = useRouter();
   const colors = useColors();
   const onboard = useOnboardConnect();
+  const hasRun = useRef(false);
 
   useEffect(() => {
+    if (hasRun.current) return;
+    hasRun.current = true;
     onboard.mutate(undefined, {
       onSuccess: (url) => {
         Linking.openURL(url);
@@ -20,7 +23,7 @@ export default function StripeRefreshScreen() {
         router.replace('/(app)/(tabs)/menu/payments');
       },
     });
-  }, []);
+  }, [onboard]);
 
   return (
     <SafeAreaView className="flex-1 bg-bg items-center justify-center">

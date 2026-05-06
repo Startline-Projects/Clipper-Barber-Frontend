@@ -24,7 +24,7 @@ export default function SearchInput({
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        className="w-full pl-[40px] pr-4 py-3 rounded-sm bg-bg text-[15px] font-medium text-ink tracking-[-0.2px] placeholder:text-tertiary"
+        className="w-full pl-[40px] pr-4 py-3 rounded-sm bg-bg text-lg font-medium text-ink tracking-[-0.2px] placeholder:text-tertiary"
       />
     </View>
   );

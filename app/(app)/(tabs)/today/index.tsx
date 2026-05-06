@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import { useCallback, useMemo, useState } from "react";
+import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "@/components/ui/Header";
@@ -19,6 +19,20 @@ import { useAutoConfirm } from "@/lib/hooks/useAutoConfirm";
 import { useProfile } from "@/lib/hooks/useProfile";
 import { toast } from "@/lib/stores/toast";
 import type { BookingListItem } from "@/lib/api/bookings";
+import type { ErrorBoundaryProps } from 'expo-router';
+import { SkeletonBookingCard } from "@/components/feedback/Skeleton";
+
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  return (
+    <View className="flex-1 items-center justify-center gap-4 p-6 bg-bg">
+      <Text className="text-[16px] font-semibold text-ink">Something went wrong</Text>
+      <Text className="text-md text-secondary text-center">{error.message}</Text>
+      <Pressable onPress={retry} className="px-6 py-3 bg-blue rounded-sm">
+        <Text className="text-white font-semibold">Try again</Text>
+      </Pressable>
+    </View>
+  );
+}
 
 const TYPE_BAR_COLORS: Record<string, string> = {
 	regular: "#30D158",
@@ -57,6 +71,13 @@ export default function TodayScreen() {
 		timeframe: "upcoming",
 	});
 
+	const [refreshing, setRefreshing] = useState(false);
+	const onRefresh = useCallback(async () => {
+		setRefreshing(true);
+		await refetch();
+		setRefreshing(false);
+	}, [refetch]);
+
 	const allBookings = useMemo(() => data?.pages.flatMap((p) => p.bookings) ?? [], [data]);
 
 	const pending = useMemo(() => allBookings.filter((b) => b.status === "pending"), [allBookings]);
@@ -68,8 +89,8 @@ export default function TodayScreen() {
 	if (isLoading) {
 		return (
 			<SafeAreaView className="flex-1 bg-bg" edges={["top"]}>
-				<View className="flex-1 items-center justify-center">
-					<ActivityIndicator color={colors.tertiary} />
+				<View className="px-5 pt-4 gap-3">
+					{[1, 2, 3, 4].map((i) => <SkeletonBookingCard key={i} />)}
 				</View>
 			</SafeAreaView>
 		);
@@ -77,7 +98,7 @@ export default function TodayScreen() {
 
 	return (
 		<SafeAreaView className="flex-1 bg-bg" edges={["top"]}>
-			<ScrollView className="flex-1 px-5">
+			<ScrollView className="flex-1 px-5" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.tertiary} />}>
 				<Header
 					title="Today"
 					subtitle={formatHeaderDate()}
@@ -129,7 +150,7 @@ export default function TodayScreen() {
 					<Card elevated className="p-0 overflow-hidden">
 						{confirmed.length === 0 && (
 							<View className="py-8 items-center">
-								<Text className="text-[14px] text-tertiary">No confirmed bookings today</Text>
+								<Text className="text-md text-tertiary">No confirmed bookings today</Text>
 							</View>
 						)}
 						{confirmed.map((b, i) => (
@@ -161,25 +182,25 @@ function PendingCard({ booking: b, onAccept, onDecline }: { booking: BookingList
 			<View className="flex-row items-center gap-3 mb-[14px]">
 				<Avatar name={b.client.name} size={40} />
 				<View className="flex-1">
-					<Text className="text-[15px] font-semibold text-ink tracking-[-0.2px]">{b.client.name}</Text>
+					<Text className="text-lg font-semibold text-ink tracking-[-0.2px]">{b.client.name}</Text>
 					<View className="flex-row items-center gap-[6px] mt-[3px]">
-						<Text className="text-[13px] text-secondary">
+						<Text className="text-base text-secondary">
 							{b.service.name} · {time} {ampm}
 						</Text>
 						<TypeBadge type={b.bookingType} />
 					</View>
 				</View>
-				<Text className="text-[18px] font-bold text-ink tracking-[-0.3px]">${b.totalPrice}</Text>
+				<Text className="text-xl font-bold text-ink tracking-[-0.3px]">${b.totalPrice}</Text>
 			</View>
 
 			<View className="flex-row gap-2">
 				<Pressable onPress={onAccept} className="flex-1 flex-row items-center justify-center gap-[6px] py-[11px] rounded-sm bg-ink">
 					<Icon name="check" size={16} color="#FFF" />
-					<Text className="text-[14px] font-semibold text-white">Accept</Text>
+					<Text className="text-md font-semibold text-white">Accept</Text>
 				</Pressable>
 				<Pressable onPress={onDecline} className="flex-1 flex-row items-center justify-center gap-[6px] py-[11px] rounded-sm border-[1.5px] border-red/30 bg-red/[0.06]">
 					<Icon name="close" size={14} color={colors.red} />
-					<Text className="text-[14px] font-semibold text-red">Decline</Text>
+					<Text className="text-md font-semibold text-red">Decline</Text>
 				</Pressable>
 			</View>
 		</Card>
@@ -194,8 +215,8 @@ function ScheduleRow({ booking: b, last, onPress }: { booking: BookingListItem; 
 	return (
 		<Pressable onPress={onPress} className={`flex-row items-center gap-[14px] px-4 py-[14px] ${!last ? "border-b border-separator" : ""}`}>
 			<View className="items-center min-w-[44px]">
-				<Text className="text-[17px] font-bold text-ink tracking-[-0.3px]">{time}</Text>
-				<Text className="text-[11px] font-semibold text-tertiary">{ampm}</Text>
+				<Text className="text-xl font-bold text-ink tracking-[-0.3px]">{time}</Text>
+				<Text className="text-xs font-semibold text-tertiary">{ampm}</Text>
 			</View>
 
 			<View style={{ backgroundColor: barColor }} className="w-[3px] h-9 rounded-full" />
@@ -203,15 +224,15 @@ function ScheduleRow({ booking: b, last, onPress }: { booking: BookingListItem; 
 			<View className="flex-1">
 				<View className="flex-row items-center gap-[5px]">
 					{b.isRecurring && <Icon name="loop" size={13} color={colors.blue} />}
-					<Text className="text-[15px] font-semibold text-ink tracking-[-0.2px]">{b.client.name}</Text>
+					<Text className="text-lg font-semibold text-ink tracking-[-0.2px]">{b.client.name}</Text>
 				</View>
 				<View className="flex-row items-center gap-[5px] mt-[2px]">
-					<Text className="text-[13px] text-secondary">{b.service.name}</Text>
+					<Text className="text-base text-secondary">{b.service.name}</Text>
 					<TypeBadge type={b.bookingType} />
 				</View>
 			</View>
 
-			<Text className="text-[17px] font-bold text-ink tracking-[-0.3px]">${b.totalPrice}</Text>
+			<Text className="text-xl font-bold text-ink tracking-[-0.3px]">${b.totalPrice}</Text>
 		</Pressable>
 	);
 }

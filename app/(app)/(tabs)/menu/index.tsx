@@ -1,4 +1,5 @@
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { useCallback, useState } from "react";
+import { Alert, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "@/components/ui/Header";
@@ -26,9 +27,16 @@ interface MenuItem {
 export default function MenuScreen() {
 	const router = useRouter();
 	const colors = useColors();
-	const { data: profile } = useProfile();
-	const { data: analytics } = useReviewsAnalytics();
+	const { data: profile, refetch: refetchProfile } = useProfile();
+	const { data: analytics, refetch: refetchAnalytics } = useReviewsAnalytics();
 	const logout = useLogout();
+
+	const [refreshing, setRefreshing] = useState(false);
+	const onRefresh = useCallback(async () => {
+		setRefreshing(true);
+		await Promise.all([refetchProfile(), refetchAnalytics()]);
+		setRefreshing(false);
+	}, [refetchProfile, refetchAnalytics]);
 
 	const avgRating = analytics?.averageRating ?? 0;
 	const totalReviews = analytics?.totalReviews ?? 0;
@@ -51,7 +59,7 @@ export default function MenuScreen() {
 		{ label: "Reviews", sub: `${totalReviews} reviews · ${avgRating.toFixed(1)} avg`, icon: "star", route: "/(app)/(tabs)/menu/reviews" },
 		{ label: "Income", sub: "Earnings & export", icon: "dollar", route: "/(app)/(tabs)/menu/income" },
 		{ label: "Clients", sub: "Client management", icon: "user", route: "/(app)/(tabs)/menu/clients/" },
-		{ label: "Payments & Payouts", sub: profile?.noShowChargeEnabled ? "Stripe connected" : "Set up Stripe", icon: "card", route: "/(app)/(tabs)/menu/payments", warn: !profile?.noShowChargeEnabled },
+		{ label: "Payments & Payouts", sub: profile?.stripeConnected ? "Stripe connected" : "Set up Stripe", icon: "card", route: "/(app)/(tabs)/menu/payments", warn: !profile?.stripeConnected },
 		{
 			label: "No-Show Charge",
 			sub: profile?.noShowChargeEnabled
@@ -66,20 +74,20 @@ export default function MenuScreen() {
 
 	return (
 		<SafeAreaView className="flex-1 bg-bg" edges={["top"]}>
-			<ScrollView className="flex-1 px-5">
+			<ScrollView className="flex-1 px-5" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.tertiary} />}>
 				<Header title="More" />
 
 				{/* Profile header */}
 				<Pressable onPress={() => router.push("/(app)/(tabs)/menu/profile")} className="items-center pb-6">
 					<Avatar name={profile?.full_name ?? "?"} size={68} />
-					<Text className="text-[20px] font-bold text-ink tracking-[-0.4px] mt-3 mb-[2px]">{profile?.full_name ?? "—"}</Text>
-					<Text className="text-[13px] text-tertiary tracking-[-0.1px]">
+					<Text className="text-2xl font-bold text-ink tracking-[-0.4px] mt-3 mb-[2px]">{profile?.full_name ?? "—"}</Text>
+					<Text className="text-base text-tertiary tracking-[-0.1px]">
 						{profile?.shop_name ?? ""}
 						{profile?.city ? ` · ${profile.city}` : ""}
 					</Text>
 					<Pressable onPress={() => router.push("/(app)/(tabs)/menu/reviews")} className="flex-row items-center gap-1 mt-1">
 						<Icon name="star" size={12} color={colors.yellow} />
-						<Text className="text-[14px] text-secondary font-medium">
+						<Text className="text-md text-secondary font-medium">
 							{avgRating.toFixed(1)} · {totalReviews} reviews
 						</Text>
 					</Pressable>
@@ -92,14 +100,6 @@ export default function MenuScreen() {
 					className="mb-4"
 				/>
 
-				{/* Appearance */}
-				<View className="mx-4 mb-4 bg-gray-50 dark:bg-gray-900 bg-white rounded-2xl overflow-hidden">
-					<Text className="text-xs font-semibold text-gray-500  dark:text-gray-400 uppercase tracking-wider px-4 pt-4 pb-2">Appearance</Text>
-					<View className="px-4">
-						<ThemeToggle />
-					</View>
-				</View>
-
 				{/* Nav list */}
 				<Card elevated className="p-0 overflow-hidden">
 					{items.map((it, i) => (
@@ -111,8 +111,8 @@ export default function MenuScreen() {
 								<Icon name={it.icon} size={18} color={it.warn ? colors.orange : colors.secondary} />
 							</View>
 							<View className="flex-1">
-								<Text className="text-[15px] font-semibold text-ink tracking-[-0.2px]">{it.label}</Text>
-								<Text className={`text-[13px] mt-[1px] ${it.warn ? "text-orange" : "text-tertiary"}`}>{it.sub}</Text>
+								<Text className="text-lg font-semibold text-ink tracking-[-0.2px]">{it.label}</Text>
+								<Text className={`text-base mt-[1px] ${it.warn ? "text-orange" : "text-tertiary"}`}>{it.sub}</Text>
 							</View>
 							<Icon name="chevron" size={16} color={colors.quaternary} />
 						</Pressable>
@@ -124,13 +124,21 @@ export default function MenuScreen() {
 							<Icon name="back" size={18} color={colors.red} />
 						</View>
 						<View className="flex-1">
-							<Text className="text-[15px] font-semibold text-red tracking-[-0.2px]">Log out</Text>
-							<Text className="text-[13px] text-red/70 mt-[1px]">Sign out of Clipper</Text>
+							<Text className="text-lg font-semibold text-red tracking-[-0.2px]">Log out</Text>
+							<Text className="text-base text-red/70 mt-[1px]">Sign out of Clipper</Text>
 						</View>
 					</Pressable>
 				</Card>
 
-				<Text className="text-[11px] text-quaternary text-center mt-6 mb-8 tracking-[0.2px]">Clipper v1.0 · Free forever</Text>
+				{/* Appearance */}
+				<View className="mt-6 bg-surface rounded-2xl overflow-hidden">
+					<Text className="text-xs font-semibold text-tertiary uppercase tracking-wider px-4 pt-4 pb-2">Appearance</Text>
+					<View className="px-4">
+						<ThemeToggle />
+					</View>
+				</View>
+
+				<Text className="text-xs text-quaternary text-center mt-6 mb-8 tracking-[0.2px]">Clipper v1.0 · Free forever</Text>
 			</ScrollView>
 		</SafeAreaView>
 	);

@@ -1,10 +1,11 @@
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
+  RefreshControl,
   ScrollView,
   Switch,
   Text,
@@ -52,6 +53,12 @@ export default function ServicesScreen() {
   const colors = useColors();
   const { data: services, isLoading, isError, refetch } = useServices();
   const toggle = useToggleService();
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
 
@@ -75,11 +82,11 @@ export default function ServicesScreen() {
           <Header title="Services" onBack={() => router.back()} />
         </View>
         <View className="flex-1 items-center justify-center px-8">
-          <Text className="text-[15px] text-tertiary text-center mb-4">
+          <Text className="text-lg text-tertiary text-center mb-4">
             Could not load services
           </Text>
           <Pressable onPress={() => refetch()}>
-            <Text className="text-[14px] font-semibold text-blue">Retry</Text>
+            <Text className="text-md font-semibold text-blue">Retry</Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -91,7 +98,7 @@ export default function ServicesScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-bg" edges={['top']}>
-      <ScrollView className="flex-1 px-5">
+      <ScrollView className="flex-1 px-5" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.tertiary} />}>
         <Header
           title="Services"
           onBack={() => router.back()}
@@ -110,7 +117,7 @@ export default function ServicesScreen() {
         {services.length === 0 ? (
           <View className="items-center py-16">
             <Icon name="scissors" size={40} color={colors.quaternary} />
-            <Text className="text-[15px] text-tertiary mt-3">
+            <Text className="text-lg text-tertiary mt-3">
               No services yet
             </Text>
             <Pressable
@@ -120,7 +127,7 @@ export default function ServicesScreen() {
               }}
               className="mt-4"
             >
-              <Text className="text-[14px] font-semibold text-blue">
+              <Text className="text-md font-semibold text-blue">
                 Add your first service
               </Text>
             </Pressable>
@@ -210,10 +217,10 @@ function ServiceRow({
       }`}
     >
       <View className="flex-1">
-        <Text className="text-[15px] font-semibold text-ink tracking-[-0.2px]">
+        <Text className="text-lg font-semibold text-ink tracking-[-0.2px]">
           {service.name}
         </Text>
-        <Text className="text-[13px] text-tertiary mt-[2px]">
+        <Text className="text-base text-tertiary mt-[2px]">
           {service.durationMinutes}min · {formatPrice(service.regularPriceUsd)}
           {service.afterHoursPriceUsd != null &&
             ` · AH ${formatPrice(service.afterHoursPriceUsd)}`}
@@ -227,8 +234,8 @@ function ServiceRow({
         <Switch
           value={service.isActive}
           onValueChange={onToggle}
-          trackColor={{ false: '#374151', true: '#22c55e' }}
-          thumbColor="#ffffff"
+          trackColor={{ false: colors.separatorOpaque, true: colors.green }}
+          thumbColor={colors.surface}
         />
       </View>
       <View className="ml-2">
@@ -366,7 +373,7 @@ function ServiceEditor({
             onPress={() => {}}
           >
             <View className="w-10 h-1 rounded-full bg-separator-opaque self-center mb-[18px]" />
-            <Text className="text-[22px] font-extrabold text-ink tracking-[-0.5px] mb-4">
+            <Text className="text-3xl font-extrabold text-ink tracking-[-0.5px] mb-4">
               {isEdit ? 'Edit Service' : 'New Service'}
             </Text>
 
@@ -389,7 +396,7 @@ function ServiceEditor({
               </View>
 
               {/* Service type */}
-              <Text className="text-[12px] font-semibold text-tertiary tracking-[0.2px] uppercase mb-[6px]">
+              <Text className="text-sm font-semibold text-tertiary tracking-[0.2px] uppercase mb-[6px]">
                 Type
               </Text>
               <View className="flex-row flex-wrap gap-2 mb-4">
@@ -400,14 +407,14 @@ function ServiceEditor({
                     className={`px-4 py-[10px] rounded-sm active:opacity-70 ${
                       type === t.value
                         ? 'bg-green'
-                        : 'bg-gray-100 dark:bg-gray-800'
+                        : 'bg-bg'
                     }`}
                   >
                     <Text
-                      className={`text-[13px] font-semibold ${
+                      className={`text-base font-semibold ${
                         type === t.value
                           ? 'text-white'
-                          : 'text-gray-700 dark:text-gray-300'
+                          : 'text-ink'
                       }`}
                     >
                       {t.label}
@@ -417,7 +424,7 @@ function ServiceEditor({
               </View>
 
               {/* Duration */}
-              <Text className="text-[12px] font-semibold text-tertiary tracking-[0.2px] uppercase mb-[6px]">
+              <Text className="text-sm font-semibold text-tertiary tracking-[0.2px] uppercase mb-[6px]">
                 Duration
               </Text>
               <View className="flex-row gap-2 mb-4">
@@ -428,14 +435,14 @@ function ServiceEditor({
                     className={`flex-1 py-[10px] rounded-sm items-center active:opacity-70 ${
                       duration === d
                         ? 'bg-green'
-                        : 'bg-gray-100 dark:bg-gray-800'
+                        : 'bg-bg'
                     }`}
                   >
                     <Text
-                      className={`text-[13px] font-semibold ${
+                      className={`text-base font-semibold ${
                         duration === d
                           ? 'text-white'
-                          : 'text-gray-700 dark:text-gray-300'
+                          : 'text-ink'
                       }`}
                     >
                       {d}m
@@ -445,7 +452,7 @@ function ServiceEditor({
               </View>
 
               {/* Prices */}
-              <Text className="text-[12px] font-semibold text-tertiary tracking-[0.2px] uppercase mb-[6px]">
+              <Text className="text-sm font-semibold text-tertiary tracking-[0.2px] uppercase mb-[6px]">
                 Pricing
               </Text>
               <View className="flex-row gap-3 mb-4">

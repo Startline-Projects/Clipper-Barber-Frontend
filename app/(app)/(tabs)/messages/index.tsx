@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
   Pressable,
+  RefreshControl,
   Text,
   TextInput,
   View,
@@ -47,8 +48,15 @@ export default function MessagesScreen() {
     return () => clearTimeout(id);
   }, [search]);
 
-  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } =
+  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage, refetch } =
     useConversations({ search: debouncedSearch || undefined });
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
   const conversations = useMemo(
     () => data?.pages.flatMap((p) => p.conversations) ?? [],
@@ -69,7 +77,7 @@ export default function MessagesScreen() {
           onChangeText={setSearch}
           placeholder="Search messages"
           placeholderTextColor={colors.tertiary}
-          className="flex-1 text-[15px] text-ink"
+          className="flex-1 text-lg text-ink"
           returnKeyType="search"
           autoCorrect={false}
           autoCapitalize="none"
@@ -96,7 +104,7 @@ export default function MessagesScreen() {
           <View className="w-14 h-14 rounded-full bg-bg items-center justify-center mb-4">
             <Icon name="chat" size={24} color={colors.tertiary} />
           </View>
-          <Text className="text-[15px] font-medium text-tertiary">
+          <Text className="text-lg font-medium text-tertiary">
             {debouncedSearch ? 'No matches found' : 'No messages yet'}
           </Text>
         </View>
@@ -106,6 +114,12 @@ export default function MessagesScreen() {
             data={conversations}
             keyExtractor={(c) => c.id}
             contentContainerClassName=""
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.tertiary} />}
+            removeClippedSubviews={true}
+            initialNumToRender={15}
+            maxToRenderPerBatch={10}
+            windowSize={5}
+            updateCellsBatchingPeriod={50}
             onEndReached={() => {
               if (hasNextPage && !isFetchingNextPage) fetchNextPage();
             }}
@@ -160,19 +174,19 @@ function ConversationRow({
       <View className="flex-1 min-w-0">
         <View className="flex-row justify-between items-baseline">
           <Text
-            className={`text-[15px] tracking-[-0.2px] ${
+            className={`text-lg tracking-[-0.2px] ${
               hasUnread ? 'font-bold text-ink' : 'font-medium text-ink'
             }`}
             numberOfLines={1}
           >
             {c.otherParty.name}
           </Text>
-          <Text className="text-[12px] text-tertiary font-medium shrink-0 ml-2">
+          <Text className="text-sm text-tertiary font-medium shrink-0 ml-2">
             {timeAgo(c.lastMessageAt)}
           </Text>
         </View>
         <Text
-          className={`text-[14px] tracking-[-0.1px] mt-[2px] ${
+          className={`text-md tracking-[-0.1px] mt-[2px] ${
             hasUnread ? 'font-medium text-ink' : 'text-tertiary'
           }`}
           numberOfLines={1}

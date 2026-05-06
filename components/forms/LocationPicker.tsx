@@ -131,20 +131,20 @@ export default function LocationPicker({
           hitSlop={8}
         >
           <Icon name="location" size={16} color={colors.blue} />
-          <Text className="text-[13px] font-semibold text-blue tracking-[-0.1px]">
+          <Text className="text-base font-semibold text-blue tracking-[-0.1px]">
             {busy ? 'Locating...' : 'Use current location'}
           </Text>
         </Pressable>
 
         {hasPin && (
-          <Text className="text-[11px] text-tertiary tracking-[-0.05px]">
+          <Text className="text-xs text-tertiary tracking-[-0.05px]">
             {(latitude as number).toFixed(5)}, {(longitude as number).toFixed(5)}
           </Text>
         )}
       </View>
 
       {!hasPin && (
-        <Text className="text-[12px] text-tertiary leading-[17px] tracking-[-0.05px] mt-1">
+        <Text className="text-sm text-tertiary leading-[17px] tracking-[-0.05px] mt-1">
           Tap the map or pick an address suggestion to drop a pin.
         </Text>
       )}

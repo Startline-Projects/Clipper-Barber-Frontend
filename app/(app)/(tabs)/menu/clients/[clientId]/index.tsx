@@ -75,11 +75,11 @@ export default function ClientDetailScreen() {
 				{/* Client header */}
 				<View className="items-center pb-4">
 					<Avatar name={client.name} uri={client.profilePhotoUrl ?? undefined} size={72} />
-					<Text className="text-[20px] font-bold text-ink tracking-[-0.4px] mt-3">{client.name}</Text>
-					{client.email && <Text className="text-[13px] text-tertiary mt-1">{client.email}</Text>}
+					<Text className="text-2xl font-bold text-ink tracking-[-0.4px] mt-3">{client.name}</Text>
+					{client.email && <Text className="text-base text-tertiary mt-1">{client.email}</Text>}
 					{client.isGuest && (
 						<View className="mt-2 px-2 py-[2px] rounded-xs bg-separator-opaque">
-							<Text className="text-[11px] font-bold text-tertiary tracking-[0.3px]">GUEST</Text>
+							<Text className="text-xs font-bold text-tertiary tracking-[0.3px]">GUEST</Text>
 						</View>
 					)}
 				</View>
@@ -166,8 +166,8 @@ export default function ClientDetailScreen() {
 function StatRow({ label, value, warn }: { label: string; value: string; warn?: boolean }) {
 	return (
 		<View className="flex-row items-center justify-between py-[11px]">
-			<Text className="text-[14px] text-secondary">{label}</Text>
-			<Text className={`text-[14px] font-semibold tracking-[-0.1px] ${warn ? "text-red" : "text-ink"}`}>{value}</Text>
+			<Text className="text-md text-secondary">{label}</Text>
+			<Text className={`text-md font-semibold tracking-[-0.1px] ${warn ? "text-red" : "text-ink"}`}>{value}</Text>
 		</View>
 	);
 }
@@ -177,11 +177,11 @@ function BookingRow({ booking: b }: { booking: ClientBooking }) {
 	return (
 		<View className="px-4 py-[12px]">
 			<View className="flex-row items-center justify-between mb-[4px]">
-				<Text className="text-[14px] font-semibold text-ink tracking-[-0.2px]">{serviceNames}</Text>
-				<Text className="text-[14px] font-bold text-ink">{usd(b.totalPriceUsd)}</Text>
+				<Text className="text-md font-semibold text-ink tracking-[-0.2px]">{serviceNames}</Text>
+				<Text className="text-md font-bold text-ink">{usd(b.totalPriceUsd)}</Text>
 			</View>
 			<View className="flex-row items-center gap-2">
-				<Text className="text-[12px] text-tertiary">
+				<Text className="text-sm text-tertiary">
 					{formatDate(b.scheduledAt)} · {formatTime(b.scheduledAt)} · {b.totalDurationMinutes}min
 				</Text>
 				<TypeBadge type={b.bookingType} />
@@ -195,16 +195,16 @@ function RecurringRow({ recurring: r }: { recurring: ClientRecurring }) {
 	return (
 		<View className="px-4 py-[12px]">
 			<View className="flex-row items-center justify-between mb-[4px]">
-				<Text className="text-[14px] font-semibold text-ink tracking-[-0.2px]">{r.service.name}</Text>
-				<Text className="text-[14px] font-bold text-ink">{usd(r.priceUsd)}</Text>
+				<Text className="text-md font-semibold text-ink tracking-[-0.2px]">{r.service.name}</Text>
+				<Text className="text-md font-bold text-ink">{usd(r.priceUsd)}</Text>
 			</View>
-			<Text className="text-[12px] text-tertiary">
+			<Text className="text-sm text-tertiary">
 				{DAY_LABELS[r.dayOfWeek]}s · {r.slotTime} · {r.frequency}
 				{r.nextOccurrenceAt ? ` · Next ${formatDate(r.nextOccurrenceAt)}` : ""}
 			</Text>
 			<View className="flex-row items-center gap-2 mt-1">
 				<View className={`px-[6px] py-[1px] rounded-xs ${r.active ? "bg-green/12" : "bg-separator-opaque"}`}>
-					<Text className={`text-[10px] font-bold tracking-[0.3px] ${r.active ? "text-green" : "text-tertiary"}`}>{r.status.replace(/_/g, " ").toUpperCase()}</Text>
+					<Text className={`text-2xs font-bold tracking-[0.3px] ${r.active ? "text-green" : "text-tertiary"}`}>{r.status.replace(/_/g, " ").toUpperCase()}</Text>
 				</View>
 			</View>
 		</View>

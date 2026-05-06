@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { ActivityIndicator, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '@/components/ui/Header';
@@ -26,11 +26,18 @@ export default function IncomeScreen() {
   const [tab, setTab] = useState<(typeof PERIODS)[number]>('Week');
   const period = PERIOD_MAP[tab];
 
-  const { data, isLoading } = useAnalytics(period);
+  const { data, isLoading, refetch } = useAnalytics(period);
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
   return (
     <SafeAreaView className="flex-1 bg-bg" edges={['top']}>
-      <ScrollView className="flex-1 px-5">
+      <ScrollView className="flex-1 px-5" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.tertiary} />}>
         <Header title="Income" onBack={() => router.back()} />
 
         <TabBar
@@ -47,20 +54,20 @@ export default function IncomeScreen() {
           <>
             {/* Total earnings */}
             <Card elevated className="items-center py-6 mb-lg">
-              <Text className="text-[12px] font-semibold text-tertiary tracking-[0.3px] uppercase mb-1">
+              <Text className="text-sm font-semibold text-tertiary tracking-[0.3px] uppercase mb-1">
                 Total Earnings
               </Text>
               <Text className="text-[42px] font-extrabold text-ink tracking-[-1.5px]">
                 {usd(data.total_earnings_usd)}
               </Text>
-              <Text className="text-[13px] text-quaternary mt-1">
+              <Text className="text-base text-quaternary mt-1">
                 {data.period_days} days · {data.window_start.slice(0, 10)} → {data.window_end.slice(0, 10)}
               </Text>
             </Card>
 
             {/* Standard bookings breakdown */}
             <Card elevated>
-              <Text className="text-[13px] font-bold text-secondary tracking-[0.3px] uppercase mb-3">
+              <Text className="text-base font-bold text-secondary tracking-[0.3px] uppercase mb-3">
                 Standard Bookings
               </Text>
 
@@ -89,14 +96,14 @@ export default function IncomeScreen() {
             {/* Recurring */}
             <Card elevated>
               <View className="flex-row items-center justify-between mb-3">
-                <Text className="text-[13px] font-bold text-secondary tracking-[0.3px] uppercase">
+                <Text className="text-base font-bold text-secondary tracking-[0.3px] uppercase">
                   Recurring
                 </Text>
-                <Text className="text-[13px] font-semibold text-ink">
+                <Text className="text-base font-semibold text-ink">
                   {usd(data.recurring.total_usd)}
                 </Text>
               </View>
-              <Text className="text-[12px] text-tertiary mb-3">
+              <Text className="text-sm text-tertiary mb-3">
                 {data.recurring.total_occurrences_completed} completed this {tab.toLowerCase()}
               </Text>
 
@@ -108,7 +115,7 @@ export default function IncomeScreen() {
                   </View>
                 ))
               ) : (
-                <Text className="text-[13px] text-quaternary py-2">
+                <Text className="text-base text-quaternary py-2">
                   No recurring earnings this period
                 </Text>
               )}
@@ -140,10 +147,10 @@ function EarningsRow({
         style={{ backgroundColor: dotColor }}
       />
       <View className="flex-1">
-        <Text className="text-[15px] font-semibold text-ink tracking-[-0.2px]">
+        <Text className="text-lg font-semibold text-ink tracking-[-0.2px]">
           {label}
         </Text>
-        <Text className="text-[12px] text-tertiary mt-[1px]">
+        <Text className="text-sm text-tertiary mt-[1px]">
           {count} booking{count !== 1 ? 's' : ''}
         </Text>
       </View>
@@ -158,16 +165,16 @@ function ArrangementRow({ arrangement: a }: { arrangement: ArrangementAnalytics 
   return (
     <View className="flex-row items-center py-[12px] gap-3">
       <View className="flex-1">
-        <Text className="text-[14px] font-semibold text-ink tracking-[-0.2px]">
+        <Text className="text-md font-semibold text-ink tracking-[-0.2px]">
           {a.client_name}
         </Text>
-        <Text className="text-[12px] text-tertiary mt-[1px]">
+        <Text className="text-sm text-tertiary mt-[1px]">
           {a.service_name} · {DAY_LABELS[a.day_of_week]}s {a.time_slot} · {a.frequency}
         </Text>
       </View>
       <View className="items-end">
-        <Text className="text-[14px] font-bold text-ink">{usd(a.total_usd)}</Text>
-        <Text className="text-[11px] text-quaternary">
+        <Text className="text-md font-bold text-ink">{usd(a.total_usd)}</Text>
+        <Text className="text-xs text-quaternary">
           {a.occurrences_completed}×
         </Text>
       </View>

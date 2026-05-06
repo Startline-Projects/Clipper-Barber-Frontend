@@ -15,10 +15,10 @@ export default function StripeSuccessScreen() {
         <View className="w-[72px] h-[72px] rounded-full bg-green/10 items-center justify-center mb-5">
           <Icon name="check" size={36} color={colors.green} />
         </View>
-        <Text className="text-[22px] font-extrabold text-ink tracking-[-0.5px] mb-2 text-center">
+        <Text className="text-3xl font-extrabold text-ink tracking-[-0.5px] mb-2 text-center">
           Stripe connected!
         </Text>
-        <Text className="text-[14px] text-secondary text-center leading-[20px] mb-8 px-4">
+        <Text className="text-md text-secondary text-center leading-[20px] mb-8 px-4">
           Your account is set up. You can now charge no-show fees and receive
           payouts directly to your bank account.
         </Text>

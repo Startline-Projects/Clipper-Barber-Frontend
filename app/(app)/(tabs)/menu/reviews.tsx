@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
   Pressable,
+  RefreshControl,
   Text,
   View,
 } from 'react-native';
@@ -39,7 +40,7 @@ export default function ReviewsScreen() {
   const colors = useColors();
   const [ratingFilter, setRatingFilter] = useState(0);
 
-  const { data: analytics, isLoading: analyticsLoading } =
+  const { data: analytics, isLoading: analyticsLoading, refetch: refetchAnalytics } =
     useReviewsAnalytics();
   const {
     data,
@@ -47,7 +48,15 @@ export default function ReviewsScreen() {
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
+    refetch: refetchReviews,
   } = useReviews(ratingFilter > 0 ? { rating: ratingFilter } : {});
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([refetchReviews(), refetchAnalytics()]);
+    setRefreshing(false);
+  }, [refetchReviews, refetchAnalytics]);
 
   const reviews = data?.pages.flatMap((p) => p.reviews) ?? [];
 
@@ -61,6 +70,7 @@ export default function ReviewsScreen() {
         data={reviews}
         keyExtractor={(r) => r.id}
         contentContainerClassName="px-5 pb-8"
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.tertiary} />}
         onEndReached={() => {
           if (hasNextPage && !isFetchingNextPage) fetchNextPage();
         }}
@@ -81,7 +91,7 @@ export default function ReviewsScreen() {
                       rating={Math.round(analytics.averageRating ?? 0)}
                       size={16}
                     />
-                    <Text className="text-[13px] text-tertiary mt-1">
+                    <Text className="text-base text-tertiary mt-1">
                       {analytics.totalReviews} reviews
                     </Text>
                   </View>
@@ -98,7 +108,7 @@ export default function ReviewsScreen() {
                       key={star}
                       className="flex-row items-center gap-2 mb-[6px]"
                     >
-                      <Text className="text-[12px] font-semibold text-tertiary w-3 text-right">
+                      <Text className="text-sm font-semibold text-tertiary w-3 text-right">
                         {star}
                       </Text>
                       <Icon name="star" size={10} color={colors.yellow} />
@@ -108,7 +118,7 @@ export default function ReviewsScreen() {
                           style={{ width: `${pct}%` }}
                         />
                       </View>
-                      <Text className="text-[11px] text-quaternary w-8 text-right">
+                      <Text className="text-xs text-quaternary w-8 text-right">
                         {item?.count ?? 0}
                       </Text>
                     </View>
@@ -130,7 +140,7 @@ export default function ReviewsScreen() {
                   }`}
                 >
                   <Text
-                    className={`text-[13px] font-semibold ${
+                    className={`text-base font-semibold ${
                       ratingFilter === r ? 'text-white' : 'text-ink'
                     }`}
                   >
@@ -146,7 +156,7 @@ export default function ReviewsScreen() {
           !isLoading ? (
             <View className="items-center py-12">
               <Icon name="star" size={36} color={colors.quaternary} />
-              <Text className="text-[15px] text-tertiary mt-3">
+              <Text className="text-lg text-tertiary mt-3">
                 No reviews yet
               </Text>
             </View>
@@ -174,17 +184,17 @@ function ReviewCard({ review }: { review: Review }) {
           size={36}
         />
         <View className="flex-1">
-          <Text className="text-[15px] font-semibold text-ink tracking-[-0.2px]">
+          <Text className="text-lg font-semibold text-ink tracking-[-0.2px]">
             {review.client.name}
           </Text>
-          <Text className="text-[12px] text-quaternary">
+          <Text className="text-sm text-quaternary">
             {review.relativeTime}
           </Text>
         </View>
         <Stars rating={review.rating} />
       </View>
       {review.comment && (
-        <Text className="text-[14px] text-secondary leading-[20px] tracking-[-0.1px]">
+        <Text className="text-md text-secondary leading-[20px] tracking-[-0.1px]">
           {review.comment}
         </Text>
       )}

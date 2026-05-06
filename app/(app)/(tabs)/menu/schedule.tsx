@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ActivityIndicator, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { useCallback, useState } from "react";
+import { ActivityIndicator, Modal, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "@/components/ui/Header";
@@ -33,6 +33,13 @@ export default function ScheduleScreen() {
 	const { data, isLoading, isError, error, refetch } = useSchedule();
 	const updateDay = useUpdateScheduleDay();
 
+	const [refreshing, setRefreshing] = useState(false);
+	const onRefresh = useCallback(async () => {
+		setRefreshing(true);
+		await refetch();
+		setRefreshing(false);
+	}, [refetch]);
+
 	const [selectedDay, setSelectedDay] = useState<DayOfWeek>(new Date().getDay() as DayOfWeek);
 	const [drafts, setDrafts] = useState<Record<number, UpdateScheduleDayBody>>({});
 	const [saving, setSaving] = useState(false);
@@ -61,9 +68,9 @@ export default function ScheduleScreen() {
 					<Header title="Schedule" onBack={() => router.back()} />
 				</View>
 				<View className="flex-1 items-center justify-center px-8">
-					<Text className="text-[15px] text-tertiary text-center mb-4">{getReadableError(error)}</Text>
+					<Text className="text-lg text-tertiary text-center mb-4">{getReadableError(error)}</Text>
 					<Pressable onPress={() => refetch()}>
-						<Text className="text-[14px] font-semibold text-blue">Retry</Text>
+						<Text className="text-md font-semibold text-blue">Retry</Text>
 					</Pressable>
 				</View>
 			</SafeAreaView>
@@ -140,7 +147,7 @@ export default function ScheduleScreen() {
 
 	return (
 		<SafeAreaView className="flex-1 bg-bg" edges={["top"]}>
-			<ScrollView className="flex-1 px-5" keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 110 }}>
+			<ScrollView className="flex-1 px-5" keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 110 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.tertiary} />}>
 				<Header title="Schedule" onBack={() => router.back()} />
 
 				{/* Day selector */}
@@ -154,8 +161,8 @@ export default function ScheduleScreen() {
 								key={i}
 								onPress={() => setSelectedDay(i as DayOfWeek)}
 								className={`flex-1 py-[10px] rounded-sm items-center ${active ? "bg-green" : "border-[1.5px] border-separator-opaque bg-card"}`}>
-								<Text className={`text-[11px] font-bold tracking-[0.3px] ${active ? "text-white" : "text-ink"}`}>{label}</Text>
-								<View className={`w-[5px] h-[5px] rounded-full mt-1 ${working ? (active ? "bg-white" : "bg-green") : "bg-separator-opaque"}`} />
+								<Text className={`text-xs font-bold tracking-[0.3px] ${active ? "text-white" : "text-ink"}`}>{label}</Text>
+								<View className={`w-[5px] h-[5px] rounded-full mt-1 ${working ? (active ? "bg-surface" : "bg-green") : "bg-separator-opaque"}`} />
 							</Pressable>
 						);
 					})}
@@ -163,7 +170,7 @@ export default function ScheduleScreen() {
 
 				{!dDay ? (
 					<Card>
-						<Text className="text-[14px] text-tertiary text-center py-4">No schedule data for {DAY_LABELS[selectedDay]}</Text>
+						<Text className="text-md text-tertiary text-center py-4">No schedule data for {DAY_LABELS[selectedDay]}</Text>
 					</Card>
 				) : (
 					<>
@@ -253,7 +260,7 @@ export default function ScheduleScreen() {
 							<>
 								{/* Regular hours */}
 								<Card elevated>
-									<Text className="text-[13px] font-bold text-secondary tracking-[0.3px] uppercase mb-3">Regular Hours</Text>
+									<Text className="text-base font-bold text-secondary tracking-[0.3px] uppercase mb-3">Regular Hours</Text>
 									<View className="flex-row gap-3">
 										<View className="flex-1">
 											<TimeSelect
@@ -356,14 +363,14 @@ export default function ScheduleScreen() {
 										<>
 											<Divider />
 											<View className="mt-3">
-												<Text className="text-[12px] font-semibold text-tertiary tracking-[0.2px] uppercase mb-[6px]">Frequency</Text>
+												<Text className="text-sm font-semibold text-tertiary tracking-[0.2px] uppercase mb-[6px]">Frequency</Text>
 												<View className="flex-row gap-2">
 													{(["weekly", "biweekly", "both"] as const).map((freq) => (
 														<Pressable
 															key={freq}
 															onPress={() => patch({ recurringFrequency: freq })}
 															className={`flex-1 py-[10px] rounded-sm items-center border-[1.5px] ${dDay.recurringFrequency === freq ? "border-green bg-green" : "border-separator-opaque bg-surface"}`}>
-															<Text className={`text-[13px] font-semibold capitalize ${dDay.recurringFrequency === freq ? "text-white" : "text-ink"}`}>{freq}</Text>
+															<Text className={`text-base font-semibold capitalize ${dDay.recurringFrequency === freq ? "text-white" : "text-ink"}`}>{freq}</Text>
 														</Pressable>
 													))}
 												</View>
@@ -376,15 +383,15 @@ export default function ScheduleScreen() {
 
 								{/* Advance notice */}
 								<Card elevated>
-									<Text className="text-[13px] font-bold text-secondary tracking-[0.3px] uppercase mb-3">Advance Notice</Text>
-									<Text className="text-[12px] text-tertiary mb-3">Minimum time before a client can book</Text>
+									<Text className="text-base font-bold text-secondary tracking-[0.3px] uppercase mb-3">Advance Notice</Text>
+									<Text className="text-sm text-tertiary mb-3">Minimum time before a client can book</Text>
 									<View className="flex-row flex-wrap gap-2">
 										{NOTICE_OPTIONS.map((mins) => (
 											<Pressable
 												key={mins}
 												onPress={() => patch({ advanceNoticeMinutes: mins })}
 												className={`px-4 py-[10px] rounded-sm border-[1.5px] ${dDay.advanceNoticeMinutes === mins ? "border-green bg-green" : "border-separator-opaque bg-surface"}`}>
-												<Text className={`text-[13px] font-semibold ${dDay.advanceNoticeMinutes === mins ? "text-white" : "text-ink"}`}>{noticeLabel(mins)}</Text>
+												<Text className={`text-base font-semibold ${dDay.advanceNoticeMinutes === mins ? "text-white" : "text-ink"}`}>{noticeLabel(mins)}</Text>
 											</Pressable>
 										))}
 									</View>
@@ -406,7 +413,7 @@ export default function ScheduleScreen() {
 					{saving ? (
 						<ActivityIndicator color={colors.ink} />
 					) : (
-						<Text className="text-[15px] font-bold text-ink tracking-[0.3px]">{isDirty ? `Save${dirtyCount > 1 ? ` (${dirtyCount} days)` : ""}` : "Saved"}</Text>
+						<Text className="text-lg font-bold text-ink tracking-[0.3px]">{isDirty ? `Save${dirtyCount > 1 ? ` (${dirtyCount} days)` : ""}` : "Saved"}</Text>
 					)}
 				</Pressable>
 			</View>
@@ -416,7 +423,7 @@ export default function ScheduleScreen() {
 				<Pressable className="flex-1 bg-black/50 justify-end" onPress={() => setTimePicker(null)}>
 					<Pressable className="bg-surface rounded-t-3xl px-5 pt-4 pb-8" onPress={() => {}}>
 						<View className="w-10 h-1 rounded-full bg-separator-opaque self-center mb-[18px]" />
-						<Text className="text-[22px] font-extrabold text-ink tracking-[-0.5px] mb-4">Select time</Text>
+						<Text className="text-3xl font-extrabold text-ink tracking-[-0.5px] mb-4">Select time</Text>
 						<ScrollView className="max-h-[340px]">
 							{TIME_SLOTS.map((slot) => (
 								<Pressable key={slot} onPress={() => handleTimeSelect(slot)} className={`py-[14px] px-4 rounded-md mb-1 ${timePicker?.current === slot ? "bg-green" : "active:bg-bg"}`}>
@@ -432,6 +439,7 @@ export default function ScheduleScreen() {
 }
 
 function RecurringExtraFeeField({ value, onChange }: { value: number; onChange: (amount: number) => void }) {
+	const colors = useColors();
 	const [draft, setDraft] = useState<string>(value ? String(value) : "");
 
 	const commit = () => {
@@ -442,9 +450,9 @@ function RecurringExtraFeeField({ value, onChange }: { value: number; onChange: 
 
 	return (
 		<View className="mt-3">
-			<Text className="text-[12px] font-semibold text-tertiary tracking-[0.2px] uppercase mb-[6px]">Extra fee for recurring bookings</Text>
-			<View className="flex-row items-center bg-gray-100 dark:bg-gray-800 rounded-xl px-4">
-				<Text className="text-[15px] font-semibold text-gray-900 dark:text-white mr-2">$</Text>
+			<Text className="text-sm font-semibold text-tertiary tracking-[0.2px] uppercase mb-[6px]">Extra fee for recurring bookings</Text>
+			<View className="flex-row items-center bg-bg rounded-xl px-4">
+				<Text className="text-lg font-semibold text-ink mr-2">$</Text>
 				<TextInput
 					value={draft}
 					onChangeText={setDraft}
@@ -452,11 +460,11 @@ function RecurringExtraFeeField({ value, onChange }: { value: number; onChange: 
 					onSubmitEditing={commit}
 					keyboardType="decimal-pad"
 					placeholder="0"
-					placeholderTextColor="#9ca3af"
-					className="flex-1 text-gray-900 dark:text-white py-3 text-[15px]"
+					placeholderTextColor={colors.tertiary}
+					className="flex-1 text-ink py-3 text-lg"
 				/>
 			</View>
-			<Text className="text-xs text-gray-400 dark:text-gray-500 mt-[6px]">This amount will be added to the service price when a client books a recurring appointment.</Text>
+			<Text className="text-xs text-tertiary mt-[6px]">This amount will be added to the service price when a client books a recurring appointment.</Text>
 		</View>
 	);
 }
@@ -464,13 +472,13 @@ function RecurringExtraFeeField({ value, onChange }: { value: number; onChange: 
 function SlotDurationCard({ value, onChange }: { value: number; onChange: (mins: 15 | 30 | 45 | 60) => void }) {
 	return (
 		<Card elevated>
-			<Text className="text-[13px] font-bold text-secondary tracking-[0.3px] uppercase mb-3">Slot Duration</Text>
+			<Text className="text-base font-bold text-secondary tracking-[0.3px] uppercase mb-3">Slot Duration</Text>
 			<View className="flex-row flex-wrap gap-2">
 				{DURATION_OPTIONS.map((dur) => {
 					const selected = value === dur;
 					return (
-						<Pressable key={dur} onPress={() => onChange(dur)} className={`px-4 py-[10px] rounded-sm items-center active:opacity-70 ${selected ? "bg-green" : "bg-gray-100 dark:bg-gray-800"}`}>
-							<Text className={`text-[13px] font-semibold ${selected ? "text-white" : "text-gray-900 dark:text-white"}`}>{dur} min</Text>
+						<Pressable key={dur} onPress={() => onChange(dur)} className={`px-4 py-[10px] rounded-sm items-center active:opacity-70 ${selected ? "bg-green" : "bg-bg"}`}>
+							<Text className={`text-base font-semibold ${selected ? "text-white" : "text-ink"}`}>{dur} min</Text>
 						</Pressable>
 					);
 				})}

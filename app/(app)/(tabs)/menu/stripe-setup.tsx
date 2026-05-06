@@ -52,10 +52,10 @@ export default function StripeSetupScreen() {
           <View className="w-20 h-20 rounded-full bg-blue/10 items-center justify-center mb-4">
             <Icon name="card" size={34} color={colors.blue} />
           </View>
-          <Text className="text-[20px] font-extrabold text-ink tracking-[-0.4px] mb-2 text-center">
+          <Text className="text-2xl font-extrabold text-ink tracking-[-0.4px] mb-2 text-center">
             Connect your Stripe account
           </Text>
-          <Text className="text-[14px] text-tertiary text-center leading-[20px] px-4">
+          <Text className="text-md text-tertiary text-center leading-[20px] px-4">
             Stripe handles payment processing so you can charge no-show fees
             and receive payouts securely.
           </Text>
@@ -67,13 +67,13 @@ export default function StripeSetupScreen() {
               {i > 0 && <View className="h-px bg-separator my-1" />}
               <View className="flex-row gap-3 py-[12px]">
                 <View className="w-[34px] h-[34px] rounded-full bg-blue/10 items-center justify-center mt-[2px]">
-                  <Text className="text-[14px] font-bold text-blue">{i + 1}</Text>
+                  <Text className="text-md font-bold text-blue">{i + 1}</Text>
                 </View>
                 <View className="flex-1">
-                  <Text className="text-[15px] font-semibold text-ink tracking-[-0.2px]">
+                  <Text className="text-lg font-semibold text-ink tracking-[-0.2px]">
                     {step.title}
                   </Text>
-                  <Text className="text-[13px] text-tertiary mt-[2px] leading-[18px]">
+                  <Text className="text-base text-tertiary mt-[2px] leading-[18px]">
                     {step.sub}
                   </Text>
                 </View>
