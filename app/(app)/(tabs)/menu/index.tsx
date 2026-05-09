@@ -79,7 +79,7 @@ export default function MenuScreen() {
 
 				{/* Profile header */}
 				<Pressable onPress={() => router.push("/(app)/(tabs)/menu/profile")} className="items-center pb-6">
-					<Avatar name={profile?.full_name ?? "?"} size={68} />
+					<Avatar name={profile?.full_name ?? "?"} size={68} uri={profile?.profile_photo_url ?? undefined} />
 					<Text className="text-2xl font-bold text-ink tracking-[-0.4px] mt-3 mb-[2px]">{profile?.full_name ?? "—"}</Text>
 					<Text className="text-base text-tertiary tracking-[-0.1px]">
 						{profile?.shop_name ?? ""}

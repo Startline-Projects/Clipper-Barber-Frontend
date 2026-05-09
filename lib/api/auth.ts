@@ -109,10 +109,13 @@ export async function signupStep3(
     form.append('instagramHandle', body.instagramHandle);
   }
 
-  // Do NOT set Content-Type. axios + RN set 'multipart/form-data; boundary=...'
-  // automatically when the body is FormData. Setting it manually drops the
-  // boundary and the server can't parse the parts.
-  await apiClient.post('/auth/barber/step3', form, { signal: opts.signal });
+  // The shared apiClient defaults Content-Type to application/json. axios will
+  // not override that for FormData, so we must set multipart explicitly. RN's
+  // network layer fills in the boundary when the value has none.
+  await apiClient.post('/auth/barber/step3', form, {
+    signal: opts.signal,
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
 }
 
 export async function login(

@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   Image,
   KeyboardAvoidingView,
-  Modal,
   Platform,
   Pressable,
   RefreshControl,
@@ -14,7 +13,9 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as ImagePicker from 'expo-image-picker';
+import type BottomSheet from '@gorhom/bottom-sheet';
+import PhotoPickerSheet from '@/components/sheets/PhotoPickerSheet';
+import { pickImage } from '@/lib/utils/pick-image';
 import Header from '@/components/ui/Header';
 import Section from '@/components/ui/Section';
 import Btn from '@/components/ui/Btn';
@@ -83,8 +84,10 @@ export default function ProfileScreen() {
   const [bio, setBio] = useState('');
   const [instagram, setInstagram] = useState('');
   const [photo, setPhoto] = useState<RNFile | null>(null);
-  const [photoPicker, setPhotoPicker] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const photoSheetRef = useRef<BottomSheet>(null);
+  const openPhotoSheet = useCallback(() => photoSheetRef.current?.snapToIndex(0), []);
+  const closePhotoSheet = useCallback(() => photoSheetRef.current?.close(), []);
   const [errors, setErrors] = useState<FieldErrors>({});
 
   const shopRef = useRef<TextInput>(null);
@@ -251,47 +254,20 @@ export default function ProfileScreen() {
   };
 
   const pickFromLibrary = async () => {
-    setPhotoPicker(false);
-    // Wait for the host Modal's slide-out animation before presenting the
-    // system picker. Presenting while another modal is dismissing causes the
-    // picker to silently no-op on both iOS and Android.
-    await new Promise((r) => setTimeout(r, Platform.OS === 'ios' ? 400 : 250));
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) {
-      toast.error('Photo library permission is required');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-    if (!result.canceled && result.assets[0]) {
-      const a = result.assets[0];
-      const ext = a.uri.split('.').pop() ?? 'jpg';
-      setPhoto({ uri: a.uri, type: a.mimeType ?? `image/${ext}`, name: `profile.${ext}` });
-    }
+    closePhotoSheet();
+    const file = await pickImage({ source: 'library', fileNamePrefix: 'profile' });
+    if (file) setPhoto(file);
   };
 
   const takePhoto = async () => {
-    setPhotoPicker(false);
-    await new Promise((r) => setTimeout(r, Platform.OS === 'ios' ? 400 : 250));
-    const perm = await ImagePicker.requestCameraPermissionsAsync();
-    if (!perm.granted) {
-      toast.error('Camera permission is required');
-      return;
-    }
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-    if (!result.canceled && result.assets[0]) {
-      const a = result.assets[0];
-      const ext = a.uri.split('.').pop() ?? 'jpg';
-      setPhoto({ uri: a.uri, type: a.mimeType ?? `image/${ext}`, name: `profile.${ext}` });
-    }
+    closePhotoSheet();
+    const file = await pickImage({ source: 'camera', fileNamePrefix: 'profile' });
+    if (file) setPhoto(file);
+  };
+
+  const removePhoto = () => {
+    setPhoto(null);
+    closePhotoSheet();
   };
 
   const photoUri = photo?.uri ?? profile.profile_photo_url;
@@ -319,7 +295,7 @@ export default function ProfileScreen() {
 
           {/* Photo */}
           <View className="items-center mb-xl">
-            <Pressable onPress={() => setPhotoPicker(true)} className="relative">
+            <Pressable onPress={openPhotoSheet} className="relative">
               {photoUri ? (
                 <Image
                   source={{ uri: photoUri }}
@@ -332,7 +308,7 @@ export default function ProfileScreen() {
                 <Icon name="camera" size={14} color={colors.bg} />
               </View>
             </Pressable>
-            <Pressable onPress={() => setPhotoPicker(true)} className="mt-3">
+            <Pressable onPress={openPhotoSheet} className="mt-3">
               <Text className="text-md font-semibold text-blue tracking-[-0.1px]">
                 Change photo
               </Text>
@@ -498,54 +474,14 @@ export default function ProfileScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Photo picker sheet */}
-      <Modal visible={photoPicker} transparent animationType="slide" onRequestClose={() => setPhotoPicker(false)}>
-        <Pressable className="flex-1 bg-black/50 justify-end" onPress={() => setPhotoPicker(false)}>
-          <Pressable className="bg-surface rounded-t-3xl px-5 pt-4 pb-8" onPress={() => {}}>
-            <View className="w-10 h-1 rounded-full bg-separator-opaque self-center mb-[18px]" />
-            <Text className="text-3xl font-extrabold text-ink tracking-[-0.5px]">
-              Profile photo
-            </Text>
-            <Text className="text-base text-secondary tracking-[-0.1px] mt-1 mb-[18px]">
-              Choose a clear headshot or your shop logo.
-            </Text>
-            <View className="gap-2">
-              <Pressable
-                onPress={takePhoto}
-                className="flex-row items-center gap-3 px-4 py-[14px] rounded-md border-[1.5px] border-separator-opaque"
-              >
-                <Icon name="camera" size={20} color={colors.ink} />
-                <Text className="text-lg font-semibold text-ink tracking-[-0.2px]">
-                  Take photo
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={pickFromLibrary}
-                className="flex-row items-center gap-3 px-4 py-[14px] rounded-md border-[1.5px] border-separator-opaque"
-              >
-                <Icon name="image" size={20} color={colors.ink} />
-                <Text className="text-lg font-semibold text-ink tracking-[-0.2px]">
-                  Choose from library
-                </Text>
-              </Pressable>
-              {(photoUri) && (
-                <Pressable
-                  onPress={() => {
-                    setPhoto(null);
-                    setPhotoPicker(false);
-                  }}
-                  className="flex-row items-center gap-3 px-4 py-[14px] rounded-md border-[1.5px] border-red/30"
-                >
-                  <Icon name="trash" size={20} color={colors.red} />
-                  <Text className="text-lg font-semibold text-red tracking-[-0.2px]">
-                    Remove photo
-                  </Text>
-                </Pressable>
-              )}
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
+      <PhotoPickerSheet
+        ref={photoSheetRef}
+        hasPhoto={!!photoUri}
+        onTakePhoto={takePhoto}
+        onChooseLibrary={pickFromLibrary}
+        onRemovePhoto={removePhoto}
+        onCancel={closePhotoSheet}
+      />
     </SafeAreaView>
   );
 }

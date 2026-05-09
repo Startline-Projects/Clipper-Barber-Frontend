@@ -2,7 +2,6 @@ import { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Modal,
   Pressable,
   ScrollView,
   Text,
@@ -14,10 +13,10 @@ import Header from '@/components/ui/Header';
 import Card from '@/components/ui/Card';
 import Section from '@/components/ui/Section';
 import Avatar from '@/components/ui/Avatar';
-import Icon from '@/components/ui/Icon';
 import Divider from '@/components/ui/Divider';
 import Btn from '@/components/ui/Btn';
 import StatusBadge from '@/components/ui/StatusBadge';
+import PauseRecurringDrawer, { type PauseRecurringBody } from '@/components/ui/PauseRecurringDrawer';
 import { useColors } from '@/lib/theme/colors';
 import {
   useRecurringDetail,
@@ -112,12 +111,11 @@ export default function RecurringDetailScreen() {
     ]);
   };
 
-  const handlePause = () => {
-    const today = new Date().toISOString().split('T')[0];
+  const handlePause = (body: PauseRecurringBody) => {
     pause.mutate(
       {
         recurringId: r.id,
-        body: { pauseStartDate: today },
+        body,
       },
       {
         onSuccess: () => {
@@ -347,55 +345,13 @@ export default function RecurringDetailScreen() {
         <View className="h-8" />
       </ScrollView>
 
-      {/* Pause drawer */}
-      <Modal
+      <PauseRecurringDrawer
         visible={pauseDrawer}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setPauseDrawer(false)}
-      >
-        <Pressable
-          className="flex-1 bg-black/50 justify-end"
-          onPress={() => setPauseDrawer(false)}
-        >
-          <Pressable className="bg-surface rounded-t-3xl px-5 pt-4 pb-8" onPress={() => {}}>
-            <View className="w-10 h-1 rounded-full bg-separator-opaque self-center mb-[18px]" />
-            <Text className="text-3xl font-extrabold text-ink tracking-[-0.5px]">
-              Pause Recurring
-            </Text>
-            <Text className="text-base text-secondary mt-1 mb-4">
-              Pause this arrangement starting today. The client will be notified.
-            </Text>
-
-            <View className="p-3 rounded-md bg-orange/8 border border-orange/20 mb-4">
-              <View className="flex-row items-center gap-2 mb-1">
-                <Icon name="alert" size={14} color={colors.orange} />
-                <Text className="text-base font-semibold text-orange">
-                  Upcoming bookings will be skipped
-                </Text>
-              </View>
-              <Text className="text-sm text-secondary leading-[17px]">
-                No new bookings will be created until the arrangement is resumed.
-              </Text>
-            </View>
-
-            <Btn
-              label={pause.isPending ? 'Pausing...' : 'Pause Now'}
-              full
-              onPress={handlePause}
-              disabled={pause.isPending}
-            />
-            <View className="mt-2">
-              <Btn
-                label="Cancel"
-                variant="ghost"
-                full
-                onPress={() => setPauseDrawer(false)}
-              />
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
+        subtitle={`${r.client.name} — ${DAY_LABELS[r.dayOfWeek]} ${r.slotTime}`}
+        isPending={pause.isPending}
+        onClose={() => setPauseDrawer(false)}
+        onConfirm={handlePause}
+      />
     </SafeAreaView>
   );
 }

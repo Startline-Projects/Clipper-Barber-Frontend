@@ -104,6 +104,7 @@ export async function updateProfile(
 
     const { data: res } = await apiClient.patch('/barber/profile', form, {
       signal: opts.signal,
+      headers: { 'Content-Type': 'multipart/form-data' },
     });
     return ProfileSchema.parse(extractPayload(res));
   }

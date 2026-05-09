@@ -3,7 +3,7 @@ import { View, Text } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import Icon, { type IconName } from '@/components/ui/Icon';
 import { useColors } from '@/lib/theme/colors';
-import { useUnreadCount } from '@/lib/hooks/useNotifications';
+import { useUnreadChatsCount } from '@/lib/hooks/useConversations';
 
 const tabs: { name: string; title: string; icon: IconName; root: string }[] = [
   { name: 'today', title: 'Today', icon: 'home', root: '/(app)/(tabs)/today' },
@@ -40,7 +40,7 @@ function TabIcon({
 
 export default function TabsLayout() {
   const colors = useColors();
-  const { data: unreadCount } = useUnreadCount();
+  const { data: unreadCount } = useUnreadChatsCount();
 
   return (
     <Tabs

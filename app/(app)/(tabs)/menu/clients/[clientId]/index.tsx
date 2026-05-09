@@ -39,7 +39,7 @@ export default function ClientDetailScreen() {
 	const { clientId } = useLocalSearchParams<{ clientId: string }>();
 	const router = useRouter();
 	const colors = useColors();
-	const { data, isLoading } = useClientDetail(clientId ?? "");
+	const { data, isLoading, isPlaceholderData, isError, error, refetch } = useClientDetail(clientId ?? "");
 	const startConvo = useStartConversation();
 
 	const handleMessage = () => {
@@ -51,6 +51,22 @@ export default function ClientDetailScreen() {
 			onError: (err) => toast.error(getReadableError(err)),
 		});
 	};
+
+	if (isError) {
+		const msg = getReadableError(error);
+		if (__DEV__) console.warn("[ClientDetail] load failed:", error);
+		return (
+			<SafeAreaView className="flex-1 bg-bg">
+				<View className="px-5">
+					<Header title="Client" onBack={() => router.back()} />
+				</View>
+				<View className="flex-1 items-center justify-center px-6">
+					<Text className="text-md text-tertiary text-center mb-4">{msg}</Text>
+					<Btn label="Retry" onPress={() => refetch()} />
+				</View>
+			</SafeAreaView>
+		);
+	}
 
 	if (isLoading || !data) {
 		return (

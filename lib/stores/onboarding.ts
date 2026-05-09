@@ -23,6 +23,7 @@ interface OnboardingState {
     step: K,
     values: OnboardingDraft[K],
   ) => void;
+  clearStep: (step: keyof OnboardingDraft) => void;
   clearDraft: () => void;
 }
 
@@ -34,6 +35,12 @@ export const useOnboardingStore = create<OnboardingState>()(
         set((s) => ({
           draft: { ...s.draft, [step]: { ...s.draft[step], ...values } },
         })),
+      clearStep: (step) =>
+        set((s) => {
+          const next = { ...s.draft };
+          delete next[step];
+          return { draft: next };
+        }),
       clearDraft: () => set({ draft: {} }),
     }),
     {

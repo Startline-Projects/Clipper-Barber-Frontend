@@ -14,7 +14,7 @@ import Header from '@/components/ui/Header';
 import Avatar from '@/components/ui/Avatar';
 import Icon from '@/components/ui/Icon';
 import { useColors } from '@/lib/theme/colors';
-import { useClients } from '@/lib/hooks/useClients';
+import { useClients, usePrefetchClientDetail } from '@/lib/hooks/useClients';
 import type { ClientListItem } from '@/lib/api/clients';
 
 const SORT_OPTIONS = [
@@ -44,6 +44,7 @@ export default function ClientsScreen() {
 
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage, refetch } =
     useClients({ search: search.trim() || undefined, sortBy, order: 'desc' });
+  const prefetchClientDetail = usePrefetchClientDetail();
 
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(async () => {
@@ -121,9 +122,10 @@ export default function ClientsScreen() {
         renderItem={({ item }) => (
           <ClientRow
             client={item}
-            onPress={() =>
-              router.push(`/(app)/(tabs)/menu/clients/${item.clientId}`)
-            }
+            onPress={() => {
+              prefetchClientDetail(item.clientId);
+              router.push(`/(app)/(tabs)/menu/clients/${item.clientId}`);
+            }}
           />
         )}
         ListEmptyComponent={

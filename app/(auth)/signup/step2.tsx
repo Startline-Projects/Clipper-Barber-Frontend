@@ -27,7 +27,7 @@ const NAME_RE = /^[a-zA-ZÀ-ɏ\s'\-\.0-9&]+$/;
 export default function SignupStep2Screen() {
   const router = useRouter();
   const signup = useSignupStep2();
-  const { draft, patchDraft, clearDraft } = useOnboardingStore();
+  const { draft, patchDraft, clearStep, clearDraft } = useOnboardingStore();
 
   const handleSkip = () => {
     clearDraft();
@@ -155,7 +155,19 @@ export default function SignupStep2Screen() {
     patchDraft('step2', body);
 
     signup.mutate(body, {
-      onSuccess: () => router.push('/(auth)/signup/step3'),
+      onSuccess: () => {
+        setShopName('');
+        setPhone('');
+        setStreetAddress('');
+        setCity('');
+        setState('');
+        setZipCode('');
+        setLatitude(null);
+        setLongitude(null);
+        setErrors({});
+        clearStep('step2');
+        router.push('/(auth)/signup/step3');
+      },
       onError: () => toast.error('Save failed. Please try again.'),
     });
   };

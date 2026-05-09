@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   Image,
   KeyboardAvoidingView,
@@ -10,15 +10,17 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as ImagePicker from 'expo-image-picker';
+import type BottomSheet from '@gorhom/bottom-sheet';
 import Header from '@/components/ui/Header';
 import Btn from '@/components/ui/Btn';
 import TextField from '@/components/forms/TextField';
 import Icon from '@/components/ui/Icon';
+import PhotoPickerSheet from '@/components/sheets/PhotoPickerSheet';
 import { useColors } from '@/lib/theme/colors';
 import { useSignupStep3 } from '@/lib/hooks/useAuth';
 import { useOnboardingStore } from '@/lib/stores/onboarding';
 import { toast } from '@/lib/stores/toast';
+import { pickImage } from '@/lib/utils/pick-image';
 import type { RNFile } from '@/lib/api/auth';
 
 const IG_RE = /^@?[a-zA-Z0-9._]{1,30}$/;
@@ -30,6 +32,9 @@ export default function SignupStep3Screen() {
   const { draft, patchDraft, clearDraft } = useOnboardingStore();
 
   const [photo, setPhoto] = useState<RNFile | null>(null);
+  const photoSheetRef = useRef<BottomSheet>(null);
+  const openPhotoSheet = useCallback(() => photoSheetRef.current?.snapToIndex(0), []);
+  const closePhotoSheet = useCallback(() => photoSheetRef.current?.close(), []);
   const [bio, setBio] = useState(draft.step3?.bio ?? '');
   const [instagram, setInstagram] = useState(
     draft.step3?.instagramHandle ?? '',
@@ -39,31 +44,22 @@ export default function SignupStep3Screen() {
     instagram?: string;
   }>({});
 
-  const pickImage = async () => {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) {
-      toast.error('Photo library permission is required');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-
-    if (result.canceled || !result.assets[0]) return;
-
-    const asset = result.assets[0];
-    const ext = asset.uri.split('.').pop() ?? 'jpg';
-    setPhoto({
-      uri: asset.uri,
-      type: asset.mimeType ?? `image/${ext}`,
-      name: `profile.${ext}`,
-    });
+  const pickFromLibrary = async () => {
+    closePhotoSheet();
+    const file = await pickImage({ source: 'library', fileNamePrefix: 'profile' });
+    if (file) setPhoto(file);
   };
 
-  const removePhoto = () => setPhoto(null);
+  const takePhoto = async () => {
+    closePhotoSheet();
+    const file = await pickImage({ source: 'camera', fileNamePrefix: 'profile' });
+    if (file) setPhoto(file);
+  };
+
+  const removePhoto = () => {
+    setPhoto(null);
+    closePhotoSheet();
+  };
 
   const handleSkip = () => {
     clearDraft();
@@ -75,7 +71,7 @@ export default function SignupStep3Screen() {
     const trimBio = bio.trim();
     const trimIg = instagram.trim();
 
-    if (trimBio.length > 300) e.bio = 'Bio must be under 300 characters';
+    if (trimBio.length > 500) e.bio = 'Bio must be under 500 characters';
     if (trimIg && !IG_RE.test(trimIg))
       e.instagram = 'Enter a valid Instagram handle';
 
@@ -153,9 +149,9 @@ export default function SignupStep3Screen() {
           {/* Photo picker */}
           <View className="items-center mb-6">
             <Pressable
-              onPress={photo ? removePhoto : pickImage}
+              onPress={openPhotoSheet}
               accessibilityLabel={
-                photo ? 'Remove profile photo' : 'Add profile photo'
+                photo ? 'Change profile photo' : 'Add profile photo'
               }
               accessibilityRole="button"
             >
@@ -166,7 +162,7 @@ export default function SignupStep3Screen() {
                     className="w-full h-full"
                   />
                   <View className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-ink items-center justify-center border-2 border-surface">
-                    <Icon name="close" size={14} color="#FFF" />
+                    <Icon name="camera" size={14} color="#FFF" />
                   </View>
                 </View>
               ) : (
@@ -175,7 +171,7 @@ export default function SignupStep3Screen() {
                 </View>
               )}
             </Pressable>
-            <Pressable onPress={pickImage} className="mt-[10px]">
+            <Pressable onPress={openPhotoSheet} className="mt-[10px]">
               <Text className="text-base text-tertiary font-medium tracking-[-0.1px]">
                 {photo ? 'Change photo' : 'Add a profile photo'}
               </Text>
@@ -239,6 +235,15 @@ export default function SignupStep3Screen() {
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <PhotoPickerSheet
+        ref={photoSheetRef}
+        hasPhoto={!!photo}
+        onTakePhoto={takePhoto}
+        onChooseLibrary={pickFromLibrary}
+        onRemovePhoto={removePhoto}
+        onCancel={closePhotoSheet}
+      />
     </SafeAreaView>
   );
 }

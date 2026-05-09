@@ -58,7 +58,11 @@ const ClientRecurringSchema = z.object({
 	dayOfWeek: z.number(),
 	slotTime: z.string(),
 	frequency: RecurringFrequency,
-	status: RecurringStatus,
+	// Tolerant: the server occasionally returns recurring status values that
+	// aren't in the documented enum (e.g. transitional/legacy states). The UI
+	// only renders this as text, so accept any string and let the backend be
+	// the source of truth. Dev-mode warning lives in getClientDetail.
+	status: z.string(),
 	active: z.boolean(),
 	priceUsd: z.number(),
 	service: z.object({ id: z.string(), name: z.string() }),
@@ -155,5 +159,22 @@ export async function getClientDetail(clientId: string, params: GetClientDetailP
 		params,
 		signal: opts.signal,
 	});
-	return ClientDetailResponseSchema.parse(extractPayload(res));
+	const payload = extractPayload(res);
+	const parsed = ClientDetailResponseSchema.safeParse(payload);
+	if (__DEV__ && parsed.success) {
+		const known = RecurringStatus.options;
+		for (const r of parsed.data.recurringSeries) {
+			if (!(known as readonly string[]).includes(r.status)) {
+				console.warn(`[getClientDetail] unknown recurring status "${r.status}" on ${r.id} — update RecurringStatus enum or backend`);
+			}
+		}
+	}
+	if (!parsed.success) {
+		if (__DEV__) {
+			console.warn("[getClientDetail] schema mismatch", JSON.stringify(parsed.error.issues, null, 2));
+			console.warn("[getClientDetail] payload was", JSON.stringify(payload, null, 2));
+		}
+		throw new Error(`Client detail response did not match schema: ${parsed.error.issues.map((i) => `${i.path.join(".")} ${i.message}`).join("; ")}`);
+	}
+	return parsed.data;
 }

@@ -33,7 +33,7 @@ This document covers every endpoint a barber user hits — from onboarding throu
 - **Base URL:** `http://localhost:3000` (dev). Production URL is environment-specific. Swagger UI is exposed at `/api/docs` outside production.
 - **Auth header:** `Authorization: Bearer <accessToken>` on every endpoint marked **Auth: required**. Tokens are issued by Supabase Auth.
 - **Role gating:** Endpoints under `role: barber` reject other roles with HTTP `403`. The role is read from the JWT `user_metadata.role` claim, so the mobile app does **not** send the role on protected calls — only on `POST /auth/login`.
-- **Content type:** `application/json` for everything *except* `POST /auth/barber/step3` which uses `multipart/form-data`.
+- **Content type:** `application/json` for everything _except_ `POST /auth/barber/step3` which uses `multipart/form-data`.
 - **Date / time format:**
   - Calendar dates: `YYYY-MM-DD` (in the barber's local timezone).
   - Times of day: `HH:mm` (24-hour, in the barber's local timezone).
@@ -44,6 +44,7 @@ This document covers every endpoint a barber user hits — from onboarding throu
   ```json
   { "error": true, "message": "Human-readable message", "code": "OPTIONAL_CODE" }
   ```
+
   - `400` validation, `401` auth missing/invalid, `403` role mismatch, `404` not found, `409` conflict (e.g. double booking, unique violation), `500` server error.
 - **Pagination:**
   - **Cursor-based** (bookings, recurring bookings, reviews, messages): pass `cursor=<id-of-last-item-from-previous-page>`. Response returns `nextCursor` + `hasMore`. `limit` default `20`, max `50`.
@@ -162,12 +163,12 @@ Optional bio + photo. **Marks onboarding complete.**
 - **Response 201** `LoginResponseDto`:
   ```json
   {
-    "accessToken": "<jwt>",
-    "refreshToken": "<jwt>",
-    "id": "<user-uuid>",
-    "email": "barber@example.com",
-    "username": "John Doe",
-    "redirectTo": "barber/step2"   // ONLY when onboarding is incomplete
+  	"accessToken": "<jwt>",
+  	"refreshToken": "<jwt>",
+  	"id": "<user-uuid>",
+  	"email": "barber@example.com",
+  	"username": "John Doe",
+  	"redirectTo": "barber/step2" // ONLY when onboarding is incomplete
   }
   ```
   If `redirectTo` is present, route the user back into onboarding at that step instead of the home screen.
@@ -257,7 +258,7 @@ Read the authenticated barber's full profile (same shape as `/auth/me` for barbe
 Update any subset of profile fields. Send `multipart/form-data` if uploading a photo, otherwise `application/json` is accepted.
 
 - **Auth:** required (barber)
-- **Content-Type:** `multipart/form-data` *or* `application/json`
+- **Content-Type:** `multipart/form-data` _or_ `application/json`
 - **Body fields** (all optional):
   | Field | Type | Notes |
   |---|---|---|
@@ -357,21 +358,22 @@ Create a service.
   ```
 
 `BarberServiceDto`:
+
 ```ts
 {
-  id: string;
-  barberId: string;
-  name: string;
-  serviceType: ServiceType;
-  durationMinutes: number;
-  regularPriceUsd: number;
-  afterHoursPriceUsd: number | null;
-  dayOffPriceUsd: number | null;
-  recurringPriceUsd: number | null;
-  isActive: boolean;
-  sortOrder: number;
-  createdAt: string;
-  updatedAt: string;
+	id: string;
+	barberId: string;
+	name: string;
+	serviceType: ServiceType;
+	durationMinutes: number;
+	regularPriceUsd: number;
+	afterHoursPriceUsd: number | null;
+	dayOffPriceUsd: number | null;
+	recurringPriceUsd: number | null;
+	isActive: boolean;
+	sortOrder: number;
+	createdAt: string;
+	updatedAt: string;
 }
 ```
 
@@ -428,27 +430,28 @@ Returns all 7 days for the authenticated barber.
 - **Response 200:** `{ success: true, data: ScheduleDayDto[] }` (7 items)
 
 `ScheduleDayDto`:
+
 ```ts
 {
-  id: string;
-  barberId: string;
-  dayOfWeek: number;                    // 0..6
-  isWorking: boolean;
-  regularStartTime: string | null;      // 'HH:mm'
-  regularEndTime: string | null;
-  slotDurationMinutes: number;          // 15 | 30 | 45 | 60
-  afterHoursEnabled: boolean;
-  afterHoursStart: string | null;
-  afterHoursEnd: string | null;
-  dayOffBookingEnabled: boolean;
-  dayOffStartTime: string | null;
-  dayOffEndTime: string | null;
-  advanceNoticeMinutes: number;         // ≥ 0
-  recurringEnabled: boolean;
-  recurringFrequency: 'weekly' | 'biweekly' | 'both' | null;
-  recurringExtraChargeUsd: number | null;  // flat surcharge added on top of service.recurringPriceUsd
-  createdAt: string;
-  updatedAt: string;
+	id: string;
+	barberId: string;
+	dayOfWeek: number; // 0..6
+	isWorking: boolean;
+	regularStartTime: string | null; // 'HH:mm'
+	regularEndTime: string | null;
+	slotDurationMinutes: number; // 15 | 30 | 45 | 60
+	afterHoursEnabled: boolean;
+	afterHoursStart: string | null;
+	afterHoursEnd: string | null;
+	dayOffBookingEnabled: boolean;
+	dayOffStartTime: string | null;
+	dayOffEndTime: string | null;
+	advanceNoticeMinutes: number; // ≥ 0
+	recurringEnabled: boolean;
+	recurringFrequency: "weekly" | "biweekly" | "both" | null;
+	recurringExtraChargeUsd: number | null; // flat surcharge added on top of service.recurringPriceUsd
+	createdAt: string;
+	updatedAt: string;
 }
 ```
 
@@ -557,24 +560,32 @@ Cursor-paginated list of the barber's bookings.
 - **Response 200** (`BarberBookingDetailResponseDto`):
   ```ts
   {
-    booking: {
-      id: string;
-      client: { id, name, profilePhotoUrl };
-      service: { name, durationMinutes };
-      scheduledAt: string;
-      bookingType: BookingType;
-      status: BookingStatus;
-      pricing: { basePrice: number; additionalCost: number; totalPrice: number };
-      confirmedAt: string | null;
-      cancelledAt: string | null;
-      cancelledBy: 'client' | 'barber' | null;
-      noShowCharged: boolean;
-      noShowChargeAmountUsd: number | null;
-      reviewLeftByClient: boolean;
-      isRecurring: boolean;
-      recurringBookingId: string | null;
-      createdAt: string;
-    }
+  	booking: {
+  		id: string;
+  		client: {
+  			(id, name, profilePhotoUrl);
+  		}
+  		service: {
+  			(name, durationMinutes);
+  		}
+  		scheduledAt: string;
+  		bookingType: BookingType;
+  		status: BookingStatus;
+  		pricing: {
+  			basePrice: number;
+  			additionalCost: number;
+  			totalPrice: number;
+  		}
+  		confirmedAt: string | null;
+  		cancelledAt: string | null;
+  		cancelledBy: "client" | "barber" | null;
+  		noShowCharged: boolean;
+  		noShowChargeAmountUsd: number | null;
+  		reviewLeftByClient: boolean;
+  		isRecurring: boolean;
+  		recurringBookingId: string | null;
+  		createdAt: string;
+  	}
   }
   ```
 
@@ -615,7 +626,7 @@ Mark a booking as no-show **after the appointment window ends**.
 
 ## 7. Recurring Bookings
 
-A *recurring booking* is a subscription (weekly or biweekly) at a fixed day-of-week + slot time. The client requests it; the barber accepts/declines. Once accepted, the system synchronously generates a 60-day rolling window of confirmed appointments.
+A _recurring booking_ is a subscription (weekly or biweekly) at a fixed day-of-week + slot time. The client requests it; the barber accepts/declines. Once accepted, the system synchronously generates a 60-day rolling window of confirmed appointments.
 
 ### 7.1 `GET /barber/recurring-bookings`
 
@@ -661,7 +672,7 @@ Cursor-paginated list. Pending offers appear here with `status = 'pending_barber
       services: [{ id, name, durationMinutes, bookingType, startOffsetMinutes, priceUsd }],
       totalDurationMinutes: number,
       pastOccurrences: [{ bookingId, scheduledAt, status }],
-      upcomingOccurrences: [{ bookingId, scheduledAt, status }],   // capped at 8
+      upcomingOccurrences: [{ bookingId, scheduledAt, status }],   // all upcoming generated occurrences
       windowStartDate: string | null,
       pauseStartDate: string | null,
       pauseEndDate: string | null,
@@ -716,13 +727,66 @@ Cancels the subscription. Future generated bookings are cancelled; past/complete
 - **Body:** none
 - **Response 200:** `{ recurringBooking }` (status `cancelled`, `cancelledBy: 'barber'`).
 
+### 7.8 Create on behalf of client (barber-initiated recurring)
+
+A barber can set up a recurring arrangement for a client directly. The flow mirrors the client-initiated path but skips the offer step — the row is auto-accepted (`status: 'active'`) and the 60-day window of `confirmed` booking rows is generated synchronously.
+
+#### 7.8.1 `GET /barber/recurring-slots`
+
+Recurring-eligible slots for the authenticated barber on a given day-of-week, including availability against existing recurring + one-off bookings.
+
+- **Auth:** required (barber)
+- **Query** (`GetRecurringSlotsQueryDto`):
+  | Param | Type | Required | Notes |
+  |---|---|---|---|
+  | `serviceIds` | uuid[] | yes | 1..4 service ids; comma-separated or repeated |
+  | `dayOfWeek` | int 0..6 | yes | 0 = Sunday |
+- **Response 200** (`RecurringSlotsResponseDto`):
+  ```ts
+  {
+    dayOfWeek: 0..6,
+    recurringAvailable: boolean,                 // false → day not configured for recurring
+    recurringFrequencyOptions: ('weekly' | 'biweekly')[],
+    recurringPriceUsd: number | null,
+    totalDurationMinutes: number,
+    slots: [{ time: 'HH:mm', available: boolean }]
+  }
+  ```
+
+#### 7.8.2 `POST /barber/recurring-bookings`
+
+Create a recurring arrangement for a chosen client. The barber implicitly accepts the offer; the row lands as `active` and the generator runs immediately.
+
+- **Auth:** required (barber)
+- **Body** (`CreateBarberRecurringBookingDto`):
+  ```ts
+  {
+    clientId: string;                            // uuid; must exist in clients
+    services: [{ barberServiceId: string; bookingType: 'regular' | 'day_off' }];   // 1..4
+    dayOfWeek: 0..6;
+    slotTime: 'HH:mm';
+    frequency: 'weekly' | 'biweekly';
+  }
+  ```
+- **Response 201** (`RecurringBookingResponseDto`): `{ recurringBooking: RecurringBookingDto }` with `status: 'active'`, `barberAcceptedAt` set, `windowStartDate` set to today (barber's local timezone).
+- Errors:
+  - `400 This barber is not accepting recurring bookings.`
+  - `400 This day is not available for recurring bookings.` / `400 This frequency is not available for this day.`
+  - `400 The selected services do not fit the bookable window for this day.`
+  - `400 slotTime does not align to the day's slot grid.`
+  - `404 Client not found` / `404 One or more services were not found or inactive for this barber`
+  - `409 This recurring slot is already taken.`
+  - `500 Failed to generate recurring occurrences after auto-accept: …` — generator failed; the recurring row is rolled back to `pending_barber_approval` so it can be re-attempted.
+
+> Same validation as `POST /client/recurring-bookings`: services must belong to the barber and be active, the day must have `recurring_enabled`, the chosen `frequency` must match the day's allowed options, and the block (`services.length × slot_duration_minutes`) must fit inside the day's bookable window aligned to the slot grid.
+
 ---
 
 ## 8. My Clients
 
 The "My Clients" surface lets a barber browse every person who has ever booked them, then drill into one client to see their entire history + every upcoming appointment (one-off and recurring) + lifetime value.
 
-A user is a *client of barber X* if they have **at least one non-cancelled booking** with X. `no_show` counts (they were on the books); pure-cancelled clients are excluded. Aggregates are computed in the database (`get_barber_clients` / `get_barber_client_detail` Postgres functions) so list queries are constant-round-trip regardless of page size.
+A user is a _client of barber X_ if they have **at least one non-cancelled booking** with X. `no_show` counts (they were on the books); pure-cancelled clients are excluded. Aggregates are computed in the database (`get_barber_clients` / `get_barber_client_detail` Postgres functions) so list queries are constant-round-trip regardless of page size.
 
 > Guest / walk-in clients are not supported by the schema (`bookings.client_id` is a NOT NULL FK to `auth.users`). `isGuest` is therefore always `false`. Phone, date of birth, and barber-side notes columns also do not exist; those fields are intentionally omitted from the response.
 
@@ -827,17 +891,17 @@ Full detail for one client, scoped to the authenticated barber. Returns **`404`*
   `BarberClientBookingDto`:
   ```ts
   {
-    id: string;
-    status: BookingStatus;
-    scheduledAt: string;               // ISO — block start
-    totalDurationMinutes: number;      // total block duration including all services
-    bookingType: BookingType;          // type of the primary (first) service
-    services: [{ id, name, durationMinutes, bookingType, priceUsd }];
-    totalPriceUsd: number;
-    isRecurring: boolean;
-    recurringBookingId: string | null;
-    cancelledAt: string | null;
-    cancelledBy: 'client' | 'barber' | null;
+  	id: string;
+  	status: BookingStatus;
+  	scheduledAt: string; // ISO — block start
+  	totalDurationMinutes: number; // total block duration including all services
+  	bookingType: BookingType; // type of the primary (first) service
+  	services: [{ id, name, durationMinutes, bookingType, priceUsd }];
+  	totalPriceUsd: number;
+  	isRecurring: boolean;
+  	recurringBookingId: string | null;
+  	cancelledAt: string | null;
+  	cancelledBy: "client" | "barber" | null;
   }
   ```
 
@@ -891,17 +955,19 @@ Aggregate breakdown for the reviews screen header (the bar chart with star-by-st
 - **Response 200** (`ReviewsAnalyticsResponseDto`):
   ```ts
   {
-    totalReviews: number;             // 7 → "7 total"
-    averageRating: number | null;     // 4.6 → big number on the left
-    ratingsBreakdown: [               // always 5 entries, ordered 5 → 1
-      { rating: 5, count: 5, percentage: 71 },
-      { rating: 4, count: 1, percentage: 14 },
-      { rating: 3, count: 1, percentage: 14 },
-      { rating: 2, count: 0, percentage: 0 },
-      { rating: 1, count: 0, percentage: 0 }
-    ];
+  	totalReviews: number; // 7 → "7 total"
+  	averageRating: number | null; // 4.6 → big number on the left
+  	ratingsBreakdown: [
+  		// always 5 entries, ordered 5 → 1
+  		{ rating: 5, count: 5, percentage: 71 },
+  		{ rating: 4, count: 1, percentage: 14 },
+  		{ rating: 3, count: 1, percentage: 14 },
+  		{ rating: 2, count: 0, percentage: 0 },
+  		{ rating: 1, count: 0, percentage: 0 },
+  	];
   }
   ```
+
   - `percentage` is a whole number (`Math.round((count / totalReviews) * 100)`). Use it directly as the bar fill width.
   - When `totalReviews === 0`: `averageRating = null` and every breakdown entry has `count = 0, percentage = 0`.
 
@@ -952,15 +1018,18 @@ Cursor-paginated message history. **Marks counterparty messages as read.**
 - **Response 200** (`ListMessagesResponseDto`) — messages are returned **ascending by created_at** (oldest first), so prepend older pages to the top of the thread:
   ```ts
   {
-    messages: [{
-      id, conversationId,
-      senderRole: 'barber' | 'client',
-      body: string,
-      readAt: string | null,
-      createdAt: string
-    }];
-    hasMore: boolean;
-    nextCursor: string | null;       // pass as `before` for the next page
+  	messages: [
+  		{
+  			id,
+  			conversationId,
+  			senderRole: "barber" | "client",
+  			body: string,
+  			readAt: string | null,
+  			createdAt: string,
+  		},
+  	];
+  	hasMore: boolean;
+  	nextCursor: string | null; // pass as `before` for the next page
   }
   ```
 
@@ -970,7 +1039,7 @@ Cursor-paginated message history. **Marks counterparty messages as read.**
 - **Body:** `{ "body": "string (1..1000)" }`
 - **Response 201:** `{ "message": MessageDto }`
 
-### 9.4 `POST /conversations/start` *(barber-only)*
+### 9.4 `POST /conversations/start` _(barber-only)_
 
 Start a thread with a client. If a thread already exists, returns the existing one (idempotent).
 
@@ -1055,10 +1124,11 @@ Two independent toggles for what kinds of push notifications the barber receives
 - **Response 200:**
   ```json
   {
-    "normal_bookings": true,
-    "recurring_bookings": true
+  	"normal_bookings": true,
+  	"recurring_bookings": true
   }
   ```
+
   - `normal_bookings` → controls `new_booking` and `cancelled_booking` push.
   - `recurring_bookings` → controls `new_recurring_request`, `recurring_cancelled`, `recurring_paused` push.
 
@@ -1179,16 +1249,17 @@ When the barber calls `PATCH /barber/bookings/:id/no-show` (Section 6.6):
 
 ## Common Error Codes
 
-| Status | Meaning | Typical cause |
-|---|---|---|
-| 400 | Validation error | missing or malformed field; class-validator rejected the body/query |
-| 401 | Unauthorized | missing / expired access token; refresh and retry |
-| 403 | Forbidden | wrong role (e.g. client hitting `/barber/...`) |
-| 404 | Not found | id does not exist or belongs to another user |
-| 409 | Conflict | double booking, duplicate username, illegal state transition (e.g. confirming an already-cancelled booking), `CONNECT_REQUIRED` when enabling no-show charge without a verified Connect account |
-| 500 | Server error | log and retry; report if persistent |
+| Status | Meaning          | Typical cause                                                                                                                                                                                   |
+| ------ | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 400    | Validation error | missing or malformed field; class-validator rejected the body/query                                                                                                                             |
+| 401    | Unauthorized     | missing / expired access token; refresh and retry                                                                                                                                               |
+| 403    | Forbidden        | wrong role (e.g. client hitting `/barber/...`)                                                                                                                                                  |
+| 404    | Not found        | id does not exist or belongs to another user                                                                                                                                                    |
+| 409    | Conflict         | double booking, duplicate username, illegal state transition (e.g. confirming an already-cancelled booking), `CONNECT_REQUIRED` when enabling no-show charge without a verified Connect account |
+| 500    | Server error     | log and retry; report if persistent                                                                                                                                                             |
 
 Common application error codes (`code` field in the error envelope):
+
 - `SUBSCRIPTION_REQUIRED` — only used on the client side; included for completeness.
 - `CONNECT_REQUIRED` — `PATCH /barber/settings/no-show-charge` rejected because the Connect account is missing or not in `charges_enabled` state.
 
@@ -1198,60 +1269,62 @@ The mobile app should treat `401` as a signal to call `POST /auth/refresh` once 
 
 ## Quick Endpoint Index (Barber)
 
-| Group | Method | Path |
-|---|---|---|
-| Auth | POST | `/auth/barber/step1` |
-| Auth | POST | `/auth/barber/step2` |
-| Auth | POST | `/auth/barber/step3` |
-| Auth | POST | `/auth/login` |
-| Auth | POST | `/auth/refresh` |
-| Auth | POST | `/auth/logout` |
-| Auth | GET | `/auth/me` |
-| Auth | POST | `/auth/forgot-password` |
-| Auth | POST | `/auth/reset-password` |
-| Auth | PATCH | `/auth/change-password` |
-| Profile | GET | `/barber/profile` |
-| Profile | PATCH | `/barber/profile` |
-| Home | GET | `/barber/home` |
-| Services | POST | `/barbers/:barberId/services` |
-| Services | GET | `/barbers/:barberId/services` |
-| Services | GET | `/barbers/:barberId/services/:serviceId` |
-| Services | PATCH | `/barbers/:barberId/services/:serviceId` |
-| Services | PATCH | `/barbers/:barberId/services/:serviceId/toggle` |
-| Services | PATCH | `/barbers/:barberId/services/reorder` |
-| Schedule | GET | `/schedule` |
-| Schedule | PATCH | `/schedule/:dayOfWeek` |
-| Settings | PATCH | `/barber/settings/auto-confirm` |
-| Settings | PATCH | `/barber/settings/auto-confirm-today` |
-| Settings | PATCH | `/barber/settings/recurring` |
-| Settings | PATCH | `/barber/settings/no-show-charge` |
-| Bookings | GET | `/barber/bookings` |
-| Bookings | GET | `/barber/bookings/:id` |
-| Bookings | PATCH | `/barber/bookings/:id/confirm` |
-| Bookings | PATCH | `/barber/bookings/:id/cancel` |
-| Bookings | PATCH | `/barber/bookings/:id/complete` |
-| Bookings | PATCH | `/barber/bookings/:id/no-show` |
-| Recurring | GET | `/barber/recurring-bookings` |
-| Recurring | GET | `/barber/recurring-bookings/:id` |
-| Recurring | PATCH | `/barber/recurring-bookings/:id/accept` |
-| Recurring | PATCH | `/barber/recurring-bookings/:id/decline` |
-| Recurring | PATCH | `/barber/recurring-bookings/:id/pause` |
-| Recurring | PATCH | `/barber/recurring-bookings/:id/resume` |
-| Recurring | PATCH | `/barber/recurring-bookings/:id/cancel` |
-| Reviews | GET | `/barber/reviews` |
-| Reviews | GET | `/barber/reviews/analytics` |
-| Messages | GET | `/conversations` |
-| Messages | GET | `/conversations/:id/messages` |
-| Messages | POST | `/conversations/:id/messages` |
-| Messages | POST | `/conversations/start` |
-| Push | POST | `/device-token` |
-| Push | DELETE | `/device-token` |
-| Notifications | GET | `/barber/notifications` |
-| Notifications | GET | `/barber/notifications/unread-count` |
-| Notifications | PUT | `/barber/notifications/:notificationId/read` |
-| Notification settings | GET | `/barber/notification-settings` |
-| Notification settings | PUT | `/barber/notification-settings` |
-| Analytics | GET | `/bookings/analytics` |
-| Connect | POST | `/barbers/me/connect/onboard` |
-| Connect | GET | `/barbers/me/connect/status` |
-| Connect | DELETE | `/barbers/me/connect` |
+| Group                 | Method | Path                                            |
+| --------------------- | ------ | ----------------------------------------------- |
+| Auth                  | POST   | `/auth/barber/step1`                            |
+| Auth                  | POST   | `/auth/barber/step2`                            |
+| Auth                  | POST   | `/auth/barber/step3`                            |
+| Auth                  | POST   | `/auth/login`                                   |
+| Auth                  | POST   | `/auth/refresh`                                 |
+| Auth                  | POST   | `/auth/logout`                                  |
+| Auth                  | GET    | `/auth/me`                                      |
+| Auth                  | POST   | `/auth/forgot-password`                         |
+| Auth                  | POST   | `/auth/reset-password`                          |
+| Auth                  | PATCH  | `/auth/change-password`                         |
+| Profile               | GET    | `/barber/profile`                               |
+| Profile               | PATCH  | `/barber/profile`                               |
+| Home                  | GET    | `/barber/home`                                  |
+| Services              | POST   | `/barbers/:barberId/services`                   |
+| Services              | GET    | `/barbers/:barberId/services`                   |
+| Services              | GET    | `/barbers/:barberId/services/:serviceId`        |
+| Services              | PATCH  | `/barbers/:barberId/services/:serviceId`        |
+| Services              | PATCH  | `/barbers/:barberId/services/:serviceId/toggle` |
+| Services              | PATCH  | `/barbers/:barberId/services/reorder`           |
+| Schedule              | GET    | `/schedule`                                     |
+| Schedule              | PATCH  | `/schedule/:dayOfWeek`                          |
+| Settings              | PATCH  | `/barber/settings/auto-confirm`                 |
+| Settings              | PATCH  | `/barber/settings/auto-confirm-today`           |
+| Settings              | PATCH  | `/barber/settings/recurring`                    |
+| Settings              | PATCH  | `/barber/settings/no-show-charge`               |
+| Bookings              | GET    | `/barber/bookings`                              |
+| Bookings              | GET    | `/barber/bookings/:id`                          |
+| Bookings              | PATCH  | `/barber/bookings/:id/confirm`                  |
+| Bookings              | PATCH  | `/barber/bookings/:id/cancel`                   |
+| Bookings              | PATCH  | `/barber/bookings/:id/complete`                 |
+| Bookings              | PATCH  | `/barber/bookings/:id/no-show`                  |
+| Recurring             | GET    | `/barber/recurring-bookings`                    |
+| Recurring             | POST   | `/barber/recurring-bookings`                    |
+| Recurring             | GET    | `/barber/recurring-slots`                       |
+| Recurring             | GET    | `/barber/recurring-bookings/:id`                |
+| Recurring             | PATCH  | `/barber/recurring-bookings/:id/accept`         |
+| Recurring             | PATCH  | `/barber/recurring-bookings/:id/decline`        |
+| Recurring             | PATCH  | `/barber/recurring-bookings/:id/pause`          |
+| Recurring             | PATCH  | `/barber/recurring-bookings/:id/resume`         |
+| Recurring             | PATCH  | `/barber/recurring-bookings/:id/cancel`         |
+| Reviews               | GET    | `/barber/reviews`                               |
+| Reviews               | GET    | `/barber/reviews/analytics`                     |
+| Messages              | GET    | `/conversations`                                |
+| Messages              | GET    | `/conversations/:id/messages`                   |
+| Messages              | POST   | `/conversations/:id/messages`                   |
+| Messages              | POST   | `/conversations/start`                          |
+| Push                  | POST   | `/device-token`                                 |
+| Push                  | DELETE | `/device-token`                                 |
+| Notifications         | GET    | `/barber/notifications`                         |
+| Notifications         | GET    | `/barber/notifications/unread-count`            |
+| Notifications         | PUT    | `/barber/notifications/:notificationId/read`    |
+| Notification settings | GET    | `/barber/notification-settings`                 |
+| Notification settings | PUT    | `/barber/notification-settings`                 |
+| Analytics             | GET    | `/bookings/analytics`                           |
+| Connect               | POST   | `/barbers/me/connect/onboard`                   |
+| Connect               | GET    | `/barbers/me/connect/status`                    |
+| Connect               | DELETE | `/barbers/me/connect`                           |
