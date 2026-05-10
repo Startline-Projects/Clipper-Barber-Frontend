@@ -165,7 +165,11 @@ function ConversationRow({
       }`}
     >
       <View className="relative">
-        <Avatar name={c.otherParty.name} size={46} />
+        <Avatar
+          name={c.otherParty.name}
+          uri={c.otherParty.profilePhotoUrl ?? undefined}
+          size={46}
+        />
         {hasUnread && (
           <View className="absolute -top-[1px] -right-[1px] w-3 h-3 rounded-full bg-blue border-[2.5px] border-surface" />
         )}

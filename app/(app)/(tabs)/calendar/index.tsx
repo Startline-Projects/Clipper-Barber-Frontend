@@ -19,9 +19,14 @@ import { useBookings } from '@/lib/hooks/useBookings';
 import type { BookingListItem } from '@/lib/api/bookings';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const TIME_GUTTER = 38;
+const TIME_GUTTER = 48;
 const CALENDAR_PADDING = 20 * 2;
-const COL_WIDTH = (SCREEN_WIDTH - CALENDAR_PADDING - TIME_GUTTER) / 7;
+const MIN_DAY_COL = 108;
+const FIT_DAY_COL = (SCREEN_WIDTH - CALENDAR_PADDING - TIME_GUTTER) / 7;
+const DAY_COL = Math.max(MIN_DAY_COL, FIT_DAY_COL);
+const HOUR_HEIGHT = 60;
+const START_HOUR = 8;
+const END_HOUR = 22;
 
 const TYPE_COLORS: Record<string, string> = {
   regular: '#30D158',
@@ -73,7 +78,7 @@ function formatHour(h: number) {
   return `${h12} ${ampm}`;
 }
 
-const HOURS = Array.from({ length: 14 }, (_, i) => i + 8);
+const HOURS = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => i + START_HOUR);
 
 export default function CalendarScreen() {
   const router = useRouter();
@@ -183,21 +188,17 @@ function WeekView({
   onRefresh: () => void;
 }) {
   const colors = useColors();
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const isCurrentWeek = weekDates.some((d) => isSameDay(d, today));
 
   const rangeLabel = `${weekDates[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${weekDates[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
 
-  const selectedBookings = useMemo(() => {
-    if (!selectedDate) return [];
-    return bookings
-      .filter((b) => isSameDay(new Date(b.scheduledAt), selectedDate))
-      .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
-  }, [bookings, selectedDate]);
-
-  const selectedDateLabel = selectedDate
-    ? selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-    : '';
+  const weekBookings = useMemo(
+    () =>
+      bookings.filter((b) =>
+        weekDates.some((d) => isSameDay(new Date(b.scheduledAt), d)),
+      ),
+    [bookings, weekDates],
+  );
 
   return (
     <ScrollView className="flex-1 px-5" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.tertiary} />}>
@@ -221,128 +222,229 @@ function WeekView({
         </Pressable>
       </View>
 
-      {/* Day headers */}
-      <View className="flex-row mb-2">
-        <View style={{ width: TIME_GUTTER }} />
-        {weekDates.map((d, i) => {
-          const isSelected = selectedDate ? isSameDay(d, selectedDate) : false;
-          return (
-            <Pressable
-              key={i}
-              onPress={() => setSelectedDate(isSelected ? null : d)}
-              style={{ width: COL_WIDTH }}
-              className="items-center active:opacity-70"
-            >
-              <Text className="text-xs font-semibold text-ink tracking-[0.3px]">
-                {DAY_NAMES[i]}
-              </Text>
-              <View
-                className={`w-7 h-7 rounded-full items-center justify-center mt-1 ${
-                  isSelected ? 'bg-green' : ''
-                }`}
-              >
-                <Text
-                  style={isSelected ? { color: colors.bg } : undefined}
-                  className={`text-md font-bold ${
-                    isSelected ? '' : 'text-tertiary'
-                  }`}
+      {/* Horizontally scrollable week grid */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 32 }}
+      >
+        <View>
+          {/* Day headers */}
+          <View className="flex-row mb-2">
+            <View style={{ width: TIME_GUTTER }} />
+            {weekDates.map((d, i) => {
+              const isToday = isSameDay(d, today);
+              const dayHasBooking = bookings.some((b) =>
+                isSameDay(new Date(b.scheduledAt), d),
+              );
+              return (
+                <View
+                  key={i}
+                  style={{ width: DAY_COL }}
+                  className="items-center"
                 >
-                  {d.getDate()}
-                </Text>
-              </View>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      {/* Hour rows */}
-      {HOURS.map((hr) => (
-        <View
-          key={hr}
-          className="flex-row border-t border-separator"
-          style={{ minHeight: 48 }}
-        >
-          <View style={{ width: TIME_GUTTER }} className="items-end pr-[6px] pt-[3px]">
-            <Text className="text-2xs font-medium text-quaternary tracking-[-0.2px]">
-              {formatHour(hr)}
-            </Text>
+                  <Text className="text-xs font-semibold text-tertiary tracking-[0.3px]">
+                    {DAY_NAMES[i]}
+                  </Text>
+                  <View
+                    className={`w-9 h-9 rounded-full items-center justify-center mt-1 ${
+                      isToday ? 'bg-green' : ''
+                    }`}
+                  >
+                    <Text
+                      style={isToday ? { color: colors.bg } : undefined}
+                      className="text-md font-bold text-ink"
+                    >
+                      {d.getDate()}
+                    </Text>
+                  </View>
+                  <View className="h-[6px] mt-1 items-center justify-center">
+                    {dayHasBooking && !isToday && (
+                      <View
+                        className="w-1 h-1 rounded-full"
+                        style={{ backgroundColor: colors.green }}
+                      />
+                    )}
+                  </View>
+                </View>
+              );
+            })}
           </View>
-          {weekDates.map((wd, di) => {
-            const slot = bookings.find((b) => {
-              const bd = new Date(b.scheduledAt);
-              return isSameDay(bd, wd) && bd.getHours() === hr;
-            });
 
-            if (!slot) return <View key={di} style={{ width: COL_WIDTH }} />;
-
-            const tc = TYPE_COLORS[slot.bookingType] ?? '#30D158';
-            return (
-              <Pressable
-                key={di}
-                onPress={() => onPress(slot.id)}
-                className="rounded-xs px-[4px] py-[5px] mx-[1px]"
+          {/* Timeline grid */}
+          <View
+            style={{
+              width: TIME_GUTTER + DAY_COL * 7,
+              height: HOURS.length * HOUR_HEIGHT,
+              position: 'relative',
+            }}
+          >
+            {/* Hour row backgrounds */}
+            {HOURS.map((hr, i) => (
+              <View
+                key={hr}
+                className="flex-row border-t border-separator"
                 style={{
-                  width: COL_WIDTH - 2,
-                  backgroundColor: tc + '12',
-                  borderLeftWidth: 3,
-                  borderLeftColor: tc,
-                  minHeight: 40,
+                  position: 'absolute',
+                  top: i * HOUR_HEIGHT,
+                  left: 0,
+                  right: 0,
+                  height: HOUR_HEIGHT,
                 }}
               >
-                <Text
-                  className="text-2xs font-bold text-ink leading-[12px] tracking-[-0.1px]"
-                  numberOfLines={1}
+                <View
+                  style={{ width: TIME_GUTTER }}
+                  className="items-end pr-2 pt-[2px]"
                 >
-                  {slot.isRecurring ? '↻ ' : ''}
-                  {slot.client.name}
-                </Text>
-                <Text
-                  style={{ color: tc }}
-                  className="text-2xs font-semibold mt-[1px]"
-                >
-                  ${slot.totalPrice}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      ))}
+                  <Text className="text-2xs font-medium text-quaternary tracking-[-0.2px]">
+                    {formatHour(hr)}
+                  </Text>
+                </View>
+                <View className="flex-1" />
+              </View>
+            ))}
+            {/* Bottom border */}
+            <View
+              className="border-t border-separator"
+              style={{
+                position: 'absolute',
+                top: HOURS.length * HOUR_HEIGHT,
+                left: 0,
+                right: 0,
+              }}
+            />
 
-      {/* Selected day bookings */}
-      {selectedDate && (
-        <View className="mt-4 mb-8">
-          <Text className="text-lg font-bold text-ink tracking-[-0.2px] mb-3">
-            {selectedDateLabel}
-          </Text>
-          {selectedBookings.length === 0 ? (
-            <View className="py-6 items-center">
-              <Text className="text-base text-tertiary">No bookings</Text>
-            </View>
-          ) : (
-            <View className="gap-2">
-              {selectedBookings.map((b) => {
-                const time = new Date(b.scheduledAt).toLocaleTimeString('en-US', {
-                  hour: 'numeric',
-                  minute: '2-digit',
-                });
+            {/* Day column dividers */}
+            {weekDates.map((d, i) => {
+              const isToday = isSameDay(d, today);
+              return (
+                <View
+                  key={`col-${i}`}
+                  pointerEvents="none"
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    bottom: 0,
+                    left: TIME_GUTTER + i * DAY_COL,
+                    width: DAY_COL,
+                    borderLeftWidth: 1,
+                    borderLeftColor: colors.separator,
+                    backgroundColor: isToday ? colors.green + '08' : 'transparent',
+                  }}
+                />
+              );
+            })}
+            {/* Right edge */}
+            <View
+              pointerEvents="none"
+              style={{
+                position: 'absolute',
+                top: 0,
+                bottom: 0,
+                left: TIME_GUTTER + 7 * DAY_COL,
+                width: 1,
+                backgroundColor: colors.separator,
+              }}
+            />
+
+            {/* Now-line on today's column */}
+            {isCurrentWeek &&
+              today.getHours() >= START_HOUR &&
+              today.getHours() < END_HOUR &&
+              (() => {
+                const todayIdx = weekDates.findIndex((d) => isSameDay(d, today));
+                if (todayIdx < 0) return null;
+                const top =
+                  (today.getHours() - START_HOUR) * HOUR_HEIGHT +
+                  (today.getMinutes() / 60) * HOUR_HEIGHT;
                 return (
-                  <BookingCard
-                    key={b.id}
-                    clientName={b.client.name}
-                    serviceName={b.service.name}
-                    time={time}
-                    price={b.totalPrice}
-                    bookingType={b.bookingType}
-                    status={b.status}
-                    isRecurring={b.isRecurring}
-                    onPress={() => onPress(b.id)}
-                  />
+                  <View
+                    pointerEvents="none"
+                    style={{
+                      position: 'absolute',
+                      top,
+                      left: TIME_GUTTER + todayIdx * DAY_COL - 4,
+                      width: DAY_COL + 4,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <View
+                      style={{ backgroundColor: colors.red }}
+                      className="w-2 h-2 rounded-full"
+                    />
+                    <View
+                      style={{ backgroundColor: colors.red, height: 1.5 }}
+                      className="flex-1"
+                    />
+                  </View>
                 );
-              })}
-            </View>
-          )}
+              })()}
+
+            {/* Bookings */}
+            {weekBookings.map((b) => {
+              const start = new Date(b.scheduledAt);
+              const dayIdx = weekDates.findIndex((d) => isSameDay(d, start));
+              if (dayIdx < 0) return null;
+              const startMinutes =
+                (start.getHours() - START_HOUR) * 60 + start.getMinutes();
+              const duration = Math.max(15, b.service.durationMinutes);
+              if (startMinutes < 0 || startMinutes >= HOURS.length * 60)
+                return null;
+              const top = (startMinutes / 60) * HOUR_HEIGHT;
+              const height = Math.max(34, (duration / 60) * HOUR_HEIGHT - 2);
+              const tc = TYPE_COLORS[b.bookingType] ?? '#30D158';
+              const timeLabel = start.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+              });
+              return (
+                <Pressable
+                  key={b.id}
+                  onPress={() => onPress(b.id)}
+                  style={{
+                    position: 'absolute',
+                    top,
+                    left: TIME_GUTTER + dayIdx * DAY_COL + 3,
+                    width: DAY_COL - 6,
+                    height,
+                    backgroundColor: tc + '22',
+                    borderLeftWidth: 3,
+                    borderLeftColor: tc,
+                    borderRadius: 6,
+                    paddingHorizontal: 6,
+                    paddingVertical: 4,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <Text
+                    className="text-2xs font-bold text-ink tracking-[-0.1px]"
+                    numberOfLines={1}
+                  >
+                    {timeLabel}
+                  </Text>
+                  <Text
+                    className="text-2xs font-semibold text-ink mt-[1px]"
+                    numberOfLines={1}
+                  >
+                    {b.isRecurring ? '↻ ' : ''}
+                    {b.client.name}
+                  </Text>
+                  {height >= 52 && (
+                    <Text
+                      style={{ color: tc }}
+                      className="text-2xs font-semibold mt-[1px]"
+                      numberOfLines={1}
+                    >
+                      {b.service.name} · ${b.totalPrice}
+                    </Text>
+                  )}
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
-      )}
+      </ScrollView>
     </ScrollView>
   );
 }

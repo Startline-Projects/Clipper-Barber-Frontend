@@ -163,7 +163,7 @@ function MessageBubble({ message: m }: { message: Message }) {
         className={`max-w-[78%] px-[14px] py-[10px] rounded-[20px] ${
           isBarber
             ? 'bg-ink rounded-br-[6px]'
-            : 'bg-bg rounded-bl-[6px]'
+            : 'bg-green rounded-bl-[6px]'
         }`}
       >
         <Text
