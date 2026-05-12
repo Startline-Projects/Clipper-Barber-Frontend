@@ -15,7 +15,11 @@ import { useColors } from '@/lib/theme/colors';
 import {
   useNotifications,
   useMarkNotificationRead,
+  useUnreadCount,
+  useClearAllNotifications,
 } from '@/lib/hooks/useNotifications';
+import { toast } from '@/lib/stores/toast';
+import { getReadableError } from '@/lib/utils/get-readable-error';
 import type { Notification } from '@/lib/api/notifications';
 
 const TYPE_COLORS: Record<string, string> = {
@@ -47,9 +51,23 @@ export default function NotificationsScreen() {
   const router = useRouter();
   const colors = useColors();
   const markRead = useMarkNotificationRead();
+  const clearAll = useClearAllNotifications();
+  const { data: unreadCount = 0 } = useUnreadCount();
 
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage, refetch } =
     useNotifications();
+
+  const handleClearAll = () => {
+    if (clearAll.isPending || unreadCount === 0) return;
+    clearAll.mutate(undefined, {
+      onSuccess: (updated) => {
+        if (updated > 0) toast.success('All notifications marked as read');
+      },
+      onError: (err) => toast.error(getReadableError(err)),
+    });
+  };
+
+  const showClearAll = unreadCount > 0 || clearAll.isPending;
 
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(async () => {
@@ -79,6 +97,23 @@ export default function NotificationsScreen() {
     <SafeAreaView className="flex-1 bg-bg" edges={['top']}>
       <View className="px-5">
         <Header title="Notifications" onBack={() => router.back()} />
+        {showClearAll && (
+          <View className="flex-row justify-end -mt-2 mb-2">
+            <Pressable
+              onPress={handleClearAll}
+              disabled={clearAll.isPending || unreadCount === 0}
+              className="px-3 py-[6px] rounded-sm active:opacity-70"
+            >
+              {clearAll.isPending ? (
+                <ActivityIndicator size="small" color={colors.blue} />
+              ) : (
+                <Text className="text-md font-semibold text-blue">
+                  Clear All
+                </Text>
+              )}
+            </Pressable>
+          </View>
+        )}
       </View>
 
       {isLoading ? (

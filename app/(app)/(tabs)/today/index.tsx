@@ -40,13 +40,21 @@ const TYPE_BAR_COLORS: Record<string, string> = {
 	day_off: "#BF5AF2",
 };
 
-function formatTime(iso: string) {
-	const d = new Date(iso);
-	const h = d.getHours();
-	const m = d.getMinutes();
-	const ampm = h >= 12 ? "PM" : "AM";
-	const h12 = h % 12 || 12;
-	return { time: `${h12}:${m.toString().padStart(2, "0")}`, ampm };
+import { formatBookingTime } from "@/lib/utils/timezone";
+
+function formatTime(b: BookingListItem) {
+	// Always render in barber timezone; never the device's.
+	const formatted = formatBookingTime(b);
+	const m = /^([0-9]+:[0-9]+)\s*(AM|PM)$/i.exec(formatted);
+	if (m) return { time: m[1], ampm: m[2].toUpperCase() };
+	return { time: formatted, ampm: "" };
+}
+
+function joinedServiceName(b: BookingListItem): string {
+	if (b.services && b.services.length > 1) {
+		return b.services.map((s) => s.name).join(" + ");
+	}
+	return b.service.name;
 }
 
 function formatHeaderDate() {
@@ -175,7 +183,7 @@ export default function TodayScreen() {
 
 function PendingCard({ booking: b, onAccept, onDecline }: { booking: BookingListItem; onAccept: () => void; onDecline: () => void }) {
 	const colors = useColors();
-	const { time, ampm } = formatTime(b.scheduledAt);
+	const { time, ampm } = formatTime(b);
 
 	return (
 		<Card elevated>
@@ -185,7 +193,7 @@ function PendingCard({ booking: b, onAccept, onDecline }: { booking: BookingList
 					<Text className="text-lg font-semibold text-ink tracking-[-0.2px]">{b.client.name}</Text>
 					<View className="flex-row items-center gap-[6px] mt-[3px]">
 						<Text className="text-base text-secondary">
-							{b.service.name} · {time} {ampm}
+							{joinedServiceName(b)} · {time} {ampm}
 						</Text>
 						<TypeBadge type={b.bookingType} />
 					</View>
@@ -208,7 +216,7 @@ function PendingCard({ booking: b, onAccept, onDecline }: { booking: BookingList
 }
 
 function ScheduleRow({ booking: b, last, onPress }: { booking: BookingListItem; last: boolean; onPress: () => void }) {
-	const { time, ampm } = formatTime(b.scheduledAt);
+	const { time, ampm } = formatTime(b);
 	const barColor = TYPE_BAR_COLORS[b.bookingType] ?? "#30D158";
 	const colors = useColors();
 
@@ -227,7 +235,7 @@ function ScheduleRow({ booking: b, last, onPress }: { booking: BookingListItem; 
 					<Text className="text-lg font-semibold text-ink tracking-[-0.2px]">{b.client.name}</Text>
 				</View>
 				<View className="flex-row items-center gap-[5px] mt-[2px]">
-					<Text className="text-base text-secondary">{b.service.name}</Text>
+					<Text className="text-base text-secondary">{joinedServiceName(b)}</Text>
 					<TypeBadge type={b.bookingType} />
 				</View>
 			</View>

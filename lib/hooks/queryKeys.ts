@@ -35,6 +35,12 @@ export interface NotificationsFilters {
   unreadOnly?: boolean;
 }
 
+export interface NoShowsFiltersKey {
+  status?: string;
+  page?: number;
+  limit?: number;
+}
+
 export interface ClientsFilters {
   search?: string;
   sortBy?: z.infer<typeof ClientSortBy>;
@@ -151,6 +157,14 @@ export const queryKeys = {
       [...queryKeys.clients.lists(), filters] as const,
     details: () => [...queryKeys.clients.all, 'detail'] as const,
     detail: (id: string) => [...queryKeys.clients.details(), id] as const,
+  },
+
+  noShows: {
+    all: ['noShows'] as const,
+    lists: () => [...queryKeys.noShows.all, 'list'] as const,
+    list: (filters: NoShowsFiltersKey) =>
+      [...queryKeys.noShows.lists(), filters] as const,
+    stats: () => [...queryKeys.noShows.all, 'stats'] as const,
   },
 
   analytics: {

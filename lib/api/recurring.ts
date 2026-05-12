@@ -39,6 +39,10 @@ const OccurrenceSchema = z.object({
   bookingId: z.string(),
   scheduledAt: z.string(),
   status: BookingStatus,
+  // Tz projection — optional for backward compatibility with older payloads.
+  timezone: z.string().optional().nullable(),
+  appointmentDate: z.string().optional().nullable(),
+  appointmentTime: z.string().optional().nullable(),
 });
 
 const RecurringDetailSchema = z.object({

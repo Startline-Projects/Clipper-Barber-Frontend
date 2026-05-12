@@ -22,11 +22,13 @@ import { useColors } from '@/lib/theme/colors';
 import {
   useBookingDetail,
   useCancelBooking,
+  useCompleteBooking,
   useNoShowBooking,
 } from '@/lib/hooks/useBookings';
 import { useStartConversation } from '@/lib/hooks/useConversations';
 import { toast } from '@/lib/stores/toast';
 import { getReadableError } from '@/lib/utils/get-readable-error';
+import { formatBookingDateTime } from '@/lib/utils/timezone';
 
 const TYPE_LABELS: Record<string, string> = {
   regular: 'Regular',
@@ -34,27 +36,13 @@ const TYPE_LABELS: Record<string, string> = {
   day_off: 'Day-Off',
 };
 
-function formatDateTime(iso: string) {
-  const d = new Date(iso);
-  const h = d.getHours();
-  const m = d.getMinutes();
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  const h12 = h % 12 || 12;
-  const time = `${h12}:${m.toString().padStart(2, '0')} ${ampm}`;
-  const date = d.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  });
-  return `${date} · ${time}`;
-}
-
 export default function BookingDetailScreen() {
   const { bookingId } = useLocalSearchParams<{ bookingId: string }>();
   const router = useRouter();
   const segments = useSegments() as string[];
   const colors = useColors();
   const cancelMut = useCancelBooking();
+  const completeMut = useCompleteBooking();
   const noShowMut = useNoShowBooking();
   const startConvo = useStartConversation();
   const [showNoShowSheet, setShowNoShowSheet] = useState(false);
@@ -108,6 +96,23 @@ export default function BookingDetailScreen() {
 
   const handleNoShow = () => setShowNoShowSheet(true);
 
+  const handleComplete = () => {
+    Alert.alert('Mark as completed?', `${b.client.name}'s appointment will be marked completed.`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Mark Completed',
+        onPress: () =>
+          completeMut.mutate(b.id, {
+            onSuccess: () => {
+              toast.success('Booking marked completed');
+              goBack();
+            },
+            onError: (err) => toast.error(getReadableError(err)),
+          }),
+      },
+    ]);
+  };
+
   const handleMessage = () => {
     if (startConvo.isPending) return;
     startConvo.mutate(b.client.id, {
@@ -134,10 +139,21 @@ export default function BookingDetailScreen() {
     });
   };
 
+  // Multi-service: prefer services[] when present; otherwise fall back to
+  // the legacy single service. Total duration = totalDurationMinutes when
+  // provided, else service.durationMinutes (which on new responses is
+  // also the total block, and on legacy responses is the single duration).
+  const serviceList =
+    b.services && b.services.length > 0
+      ? b.services
+      : [{ id: 'legacy', name: b.service.name, durationMinutes: b.service.durationMinutes, bookingType: b.bookingType, startOffsetMinutes: 0 }];
+  const totalDuration = b.totalDurationMinutes ?? b.service.durationMinutes;
+  const serviceLabel = serviceList.map((s) => s.name).join(' + ');
+
   const rows: [string, string][] = [
-    ['Service', b.service.name],
-    ['Time', formatDateTime(b.scheduledAt)],
-    ['Duration', `${b.service.durationMinutes} min`],
+    ['Service', serviceLabel],
+    ['Time', formatBookingDateTime(b)],
+    ['Total Duration', `${totalDuration} min`],
     ['Type', TYPE_LABELS[b.bookingType] ?? b.bookingType],
   ];
 
@@ -176,6 +192,22 @@ export default function BookingDetailScreen() {
               </Text>
             </View>
           ))}
+          {serviceList.length > 1 && (
+            <View className="py-[10px] border-t border-separator">
+              <Text className="text-md text-tertiary mb-2">Services</Text>
+              {serviceList.map((s) => (
+                <View
+                  key={s.id}
+                  className="flex-row justify-between py-[4px]"
+                >
+                  <Text className="text-base text-ink">{s.name}</Text>
+                  <Text className="text-base text-secondary">
+                    {s.durationMinutes} min
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
           <View className="flex-row justify-between py-[10px] border-t border-separator">
             <Text className="text-md text-tertiary">Price</Text>
             <Text className="text-3xl font-extrabold text-ink tracking-[-0.5px]">
@@ -202,18 +234,28 @@ export default function BookingDetailScreen() {
         </View>
 
         {b.status === 'confirmed' && (
-          <View className="mt-sm mb-8">
-            <Btn
-              label={
-                b.noShowChargeAmountUsd
-                  ? `Mark No-Show · Charge $${b.noShowChargeAmountUsd}`
-                  : 'Mark No-Show'
-              }
-              variant="ghost"
-              full
-              onPress={handleNoShow}
-            />
-          </View>
+          <>
+            <View className="mt-sm">
+              <Btn
+                label={completeMut.isPending ? 'Marking...' : 'Mark Completed'}
+                full
+                disabled={completeMut.isPending}
+                onPress={handleComplete}
+              />
+            </View>
+            <View className="mt-sm mb-8">
+              <Btn
+                label={
+                  b.noShowChargeAmountUsd
+                    ? `Mark No-Show · Charge $${b.noShowChargeAmountUsd}`
+                    : 'Mark No-Show'
+                }
+                variant="ghost"
+                full
+                onPress={handleNoShow}
+              />
+            </View>
+          </>
         )}
       </ScrollView>
 

@@ -17,11 +17,16 @@ const NoShowChargeSchema = z.object({
   amountUsd: z.number().nullable(),
 });
 
+const InHouseServicesSchema = z.object({
+  inHouseServices: z.boolean(),
+});
+
 // ---------- Public types ----------
 
 export type AutoConfirmSettings = z.infer<typeof AutoConfirmSchema>;
 export type RecurringSetting = z.infer<typeof RecurringSettingSchema>;
 export type NoShowChargeSetting = z.infer<typeof NoShowChargeSchema>;
+export type InHouseServicesSetting = z.infer<typeof InHouseServicesSchema>;
 
 export interface NoShowChargeBody {
   enabled: boolean;
@@ -77,6 +82,18 @@ export async function toggleRecurring(
     { signal: opts.signal },
   );
   return RecurringSettingSchema.parse(extractPayload(res));
+}
+
+export async function toggleInHouseServices(
+  enabled: boolean,
+  opts: RequestOptions = {},
+): Promise<InHouseServicesSetting> {
+  const { data: res } = await apiClient.patch(
+    '/barber/settings/in-house-services',
+    { enabled },
+    { signal: opts.signal },
+  );
+  return InHouseServicesSchema.parse(extractPayload(res));
 }
 
 export async function updateNoShowCharge(

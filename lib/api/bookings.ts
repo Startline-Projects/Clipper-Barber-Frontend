@@ -10,6 +10,25 @@ import {
 
 // ---------- Response schemas ----------
 
+// Per multi-service rollout: a booking can carry up to 4 services. New
+// `services[]` and `totalDurationMinutes` ship on every barber booking
+// response. Legacy `service.durationMinutes` now means TOTAL BLOCK,
+// not the primary service's nominal duration. All fields are optional
+// here so pre-rollout responses still validate.
+const BookingServiceItemSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  durationMinutes: z.number(), // NOMINAL service duration
+  bookingType: BookingType,
+  startOffsetMinutes: z.number(),
+});
+
+const BookingTimeFieldsSchema = {
+  timezone: z.string().optional().nullable(),
+  appointmentDate: z.string().optional().nullable(),
+  appointmentTime: z.string().optional().nullable(),
+};
+
 const BookingListItemSchema = z.object({
   id: z.string(),
   client: z.object({
@@ -19,9 +38,12 @@ const BookingListItemSchema = z.object({
   }),
   service: z.object({
     name: z.string(),
-    durationMinutes: z.number(),
+    durationMinutes: z.number(), // now TOTAL BLOCK duration
   }),
+  services: z.array(BookingServiceItemSchema).optional(),
+  totalDurationMinutes: z.number().optional(),
   scheduledAt: z.string(),
+  ...BookingTimeFieldsSchema,
   bookingType: BookingType,
   totalPrice: z.number(),
   status: BookingStatus,
@@ -46,9 +68,12 @@ const BookingDetailSchema = z.object({
     }),
     service: z.object({
       name: z.string(),
-      durationMinutes: z.number(),
+      durationMinutes: z.number(), // total block duration
     }),
+    services: z.array(BookingServiceItemSchema).optional(),
+    totalDurationMinutes: z.number().optional(),
     scheduledAt: z.string(),
+    ...BookingTimeFieldsSchema,
     bookingType: BookingType,
     status: BookingStatus,
     pricing: z.object({
@@ -80,6 +105,7 @@ const BookingActionSchema = z.object({
 
 // ---------- Public types ----------
 
+export type BookingServiceItem = z.infer<typeof BookingServiceItemSchema>;
 export type BookingListItem = z.infer<typeof BookingListItemSchema>;
 export type BookingsListPage = z.infer<typeof BookingListResponseSchema>;
 export type BookingDetail = z.infer<typeof BookingDetailSchema>;

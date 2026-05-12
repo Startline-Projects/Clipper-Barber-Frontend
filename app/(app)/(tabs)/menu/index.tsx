@@ -68,6 +68,18 @@ export default function MenuScreen() {
 			icon: "shield",
 			route: "/(app)/(tabs)/menu/no-show-settings",
 		},
+		{
+			label: "No-Show Payments",
+			sub: "Track owed & paid no-show fees",
+			icon: "dollar",
+			route: "/(app)/(tabs)/menu/no-shows",
+		},
+		{
+			label: "In-House Services",
+			sub: profile?.inHouseServices ? "Enabled" : "Disabled",
+			icon: "scissors",
+			route: "/(app)/(tabs)/menu/in-house-services",
+		},
 		{ label: "Notification Settings", sub: "Push preferences", icon: "bell", route: "/(app)/(tabs)/menu/notification-settings" },
 		{ label: "Change Password", sub: "Update your password", icon: "shield", route: "/(app)/(tabs)/menu/change-password" },
 	];

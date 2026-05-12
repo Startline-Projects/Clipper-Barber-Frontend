@@ -38,6 +38,10 @@ const MarkReadSchema = z.object({
   isRead: z.literal(true),
 });
 
+const ClearAllSchema = z.object({
+  updated: z.number(),
+});
+
 // ---------- Public types ----------
 
 export type Notification = z.infer<typeof NotificationSchema>;
@@ -93,4 +97,15 @@ export async function markNotificationRead(
     { signal: opts.signal },
   );
   MarkReadSchema.parse(extractPayload(res));
+}
+
+export async function clearAllNotifications(
+  opts: RequestOptions = {},
+): Promise<number> {
+  const { data: res } = await apiClient.post(
+    '/barber/notifications/clear-all',
+    undefined,
+    { signal: opts.signal },
+  );
+  return ClearAllSchema.parse(extractPayload(res)).updated;
 }

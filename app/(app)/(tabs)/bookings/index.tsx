@@ -56,12 +56,13 @@ const RECURRING_STATUS_MAP: Record<string, string> = {
   Paused: 'paused',
 };
 
-function formatTime(iso: string) {
-  const d = new Date(iso);
-  const h = d.getHours();
-  const m = d.getMinutes();
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  return `${h % 12 || 12}:${m.toString().padStart(2, '0')} ${ampm}`;
+import { formatBookingTime } from '@/lib/utils/timezone';
+
+function joinedServiceName(b: BookingListItem): string {
+  if (b.services && b.services.length > 1) {
+    return b.services.map((s) => s.name).join(' + ');
+  }
+  return b.service.name;
 }
 
 function formatDate(iso: string) {
@@ -261,7 +262,7 @@ function BookingCard({
             </Text>
           </View>
           <Text className="text-base text-secondary tracking-[-0.1px] mt-[2px]">
-            {b.service.name} · {formatTime(b.scheduledAt)}
+            {joinedServiceName(b)} · {formatBookingTime(b)}
           </Text>
           <View className="flex-row gap-1 mt-[5px]">
             <TypeBadge type={b.bookingType} />

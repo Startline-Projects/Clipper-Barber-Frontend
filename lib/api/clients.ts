@@ -35,6 +35,10 @@ const ClientBookingSchema = z.object({
 	id: z.string(),
 	status: BookingStatus,
 	scheduledAt: z.string(),
+	// Canonical 4-field time projection — optional for legacy payloads.
+	timezone: z.string().optional().nullable(),
+	appointmentDate: z.string().optional().nullable(),
+	appointmentTime: z.string().optional().nullable(),
 	totalDurationMinutes: z.number(),
 	bookingType: BookingType,
 	services: z.array(

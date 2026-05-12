@@ -106,3 +106,59 @@ export function useMarkNotificationRead() {
     onSettled: () => invalidations.notificationRead(qc),
   });
 }
+
+export function useClearAllNotifications() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => notifApi.clearAllNotifications(),
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: queryKeys.notifications.lists() });
+      await qc.cancelQueries({
+        queryKey: queryKeys.notifications.unreadCount(),
+      });
+
+      const previousPages = new Map<
+        string,
+        InfiniteData<NotificationsListPage> | undefined
+      >();
+
+      qc.getQueriesData<InfiniteData<NotificationsListPage>>({
+        queryKey: queryKeys.notifications.lists(),
+      }).forEach(([key, data]) => {
+        previousPages.set(JSON.stringify(key), data);
+        if (!data) return;
+
+        qc.setQueryData<InfiniteData<NotificationsListPage>>(key, {
+          ...data,
+          pages: data.pages.map((page) => ({
+            ...page,
+            notifications: page.notifications.map((n) =>
+              n.isRead ? n : { ...n, isRead: true },
+            ),
+          })),
+        });
+      });
+
+      const previousCount = qc.getQueryData<number>(
+        queryKeys.notifications.unreadCount(),
+      );
+      qc.setQueryData(queryKeys.notifications.unreadCount(), 0);
+
+      return { previousPages, previousCount };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previousPages) {
+        ctx.previousPages.forEach((data, keyStr) => {
+          qc.setQueryData(JSON.parse(keyStr), data);
+        });
+      }
+      if (ctx?.previousCount !== undefined) {
+        qc.setQueryData(
+          queryKeys.notifications.unreadCount(),
+          ctx.previousCount,
+        );
+      }
+    },
+    onSettled: () => invalidations.notificationRead(qc),
+  });
+}

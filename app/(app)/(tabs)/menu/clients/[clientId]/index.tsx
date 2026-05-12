@@ -23,16 +23,16 @@ function usd(n: number): string {
 	return `$${n.toFixed(0)}`;
 }
 
-function formatDate(iso: string): string {
-	const d = new Date(iso);
-	return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear() % 100}`;
+import { formatBookingDate, formatBookingTime, type BookingTimeFields } from "@/lib/utils/timezone";
+
+function formatDate(b: BookingTimeFields | string): string {
+	if (typeof b === "string") return formatBookingDate({ scheduledAt: b });
+	return formatBookingDate(b);
 }
 
-function formatTime(iso: string): string {
-	const d = new Date(iso);
-	const h = d.getHours();
-	const m = d.getMinutes();
-	return `${h % 12 || 12}:${m.toString().padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
+function formatTime(b: BookingTimeFields | string): string {
+	if (typeof b === "string") return formatBookingTime({ scheduledAt: b });
+	return formatBookingTime(b);
 }
 
 export default function ClientDetailScreen() {
@@ -198,7 +198,7 @@ function BookingRow({ booking: b }: { booking: ClientBooking }) {
 			</View>
 			<View className="flex-row items-center gap-2">
 				<Text className="text-sm text-tertiary">
-					{formatDate(b.scheduledAt)} · {formatTime(b.scheduledAt)} · {b.totalDurationMinutes}min
+					{formatDate(b)} · {formatTime(b)} · {b.totalDurationMinutes}min
 				</Text>
 				<TypeBadge type={b.bookingType} />
 				<StatusBadge status={b.status} />

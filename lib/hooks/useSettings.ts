@@ -76,6 +76,25 @@ export function useToggleRecurring() {
   });
 }
 
+export function useToggleInHouseServices() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (enabled: boolean) => settingsApi.toggleInHouseServices(enabled),
+    onMutate: async (enabled) => {
+      await qc.cancelQueries({ queryKey: queryKeys.profile.me() });
+      const previous = qc.getQueryData<BarberProfile>(queryKeys.profile.me());
+      patchProfileCache(qc, { inHouseServices: enabled });
+      return { previous };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) qc.setQueryData(queryKeys.profile.me(), ctx.previous);
+    },
+    onSuccess: (res) => {
+      patchProfileCache(qc, { inHouseServices: res.inHouseServices });
+    },
+  });
+}
+
 export interface UpdateNoShowChargeVariables {
   enabled: boolean;
   amountUsd?: number;

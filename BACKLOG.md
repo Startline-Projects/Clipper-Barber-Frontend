@@ -4,6 +4,50 @@ Items below were identified during the audit but intentionally not fixed in the 
 
 ---
 
+## Incoming feature tasks
+
+### 16. Barber Settings — In-House Services toggle
+
+New barber setting: allow clients to request services at the barber's location/premises.
+
+**API**
+- `PATCH /barber/settings/in-house-services`
+  - Request: `{ enabled: boolean }`
+  - Response: `{ inHouseServices: boolean }`
+
+**Settings screen tasks**
+- Add toggle row labeled **In-House Services** with description: *"Allow clients to request services at your location/premises."*
+- Integrate with the API endpoint above.
+- Optimistic update on toggle.
+- Loading state while request in flight.
+- Error rollback on failure.
+- Persist setting locally (React Query cache + barber profile).
+- Initialize toggle state from the barber profile/settings fetch.
+- Reuse the same pattern already used for `recurring_enabled`, `auto_confirm`, and `no_show_charge` in [app/(app)/(tabs)/menu/](app/%28app%29/%28tabs%29/menu/).
+
+---
+
+### 17. Clear All Notifications
+
+**API**
+- `POST /barber/notifications/clear-all`
+  - Response: `{ updated: number }`
+
+**Behavior**
+- Mark all unread notifications as read.
+- **Do not** delete notifications — keep history visible.
+- Unread badge resets to 0.
+
+**Notifications screen tasks**
+- Add **Clear All** button on the barber notifications screen.
+- Optimistic reset of unread count.
+- Disable button while loading.
+- No-op safe handling (button is inert / hidden when already 0 unread).
+- Empty-state handling when no notifications exist.
+- Handle `updated = 0` response gracefully (no error toast).
+
+---
+
 ## Product clarifications needed first
 
 | Item | Why deferred | Owner | Notes |

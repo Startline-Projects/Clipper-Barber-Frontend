@@ -30,6 +30,7 @@ const ProfileSchema = z.object({
   recurringEnabled: z.boolean().optional(),
   noShowChargeEnabled: z.boolean().optional(),
   noShowChargeAmountUsd: z.number().nullable().optional(),
+  inHouseServices: z.boolean().optional(),
   stripeConnected: z.boolean().optional(),
   locationSet: z.boolean().optional(),
 });

@@ -31,9 +31,17 @@ import { getReadableError } from '@/lib/utils/get-readable-error';
 
 const DAY_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
+import { formatBookingDate } from '@/lib/utils/timezone';
+
+interface OccurrenceLike {
+  scheduledAt: string;
+  timezone?: string | null;
+  appointmentDate?: string | null;
+  appointmentTime?: string | null;
+}
+
+function formatDate(occ: OccurrenceLike): string {
+  return formatBookingDate(occ);
 }
 
 export default function RecurringDetailScreen() {
@@ -205,7 +213,14 @@ export default function RecurringDetailScreen() {
 
         {/* Details card */}
         <Card elevated>
-          <DetailRow label="Service" value={r.service.name} />
+          <DetailRow
+            label="Service"
+            value={
+              r.services && r.services.length > 1
+                ? r.services.map((s) => s.name).join(' + ')
+                : r.service.name
+            }
+          />
           <Divider />
           <DetailRow label="Day" value={DAY_LABELS[r.dayOfWeek]} />
           <Divider />
@@ -310,7 +325,7 @@ export default function RecurringDetailScreen() {
                   }`}
                 >
                   <Text className="text-md text-ink font-medium">
-                    {formatDate(occ.scheduledAt)}
+                    {formatDate(occ)}
                   </Text>
                   <StatusBadge status={occ.status} />
                 </Pressable>
@@ -333,7 +348,7 @@ export default function RecurringDetailScreen() {
                   }`}
                 >
                   <Text className="text-md text-tertiary">
-                    {formatDate(occ.scheduledAt)}
+                    {formatDate(occ)}
                   </Text>
                   <StatusBadge status={occ.status} />
                 </View>

@@ -17,6 +17,10 @@ import Icon from '@/components/ui/Icon';
 import { useColors } from '@/lib/theme/colors';
 import { useBookings } from '@/lib/hooks/useBookings';
 import type { BookingListItem } from '@/lib/api/bookings';
+import {
+  formatBookingTime,
+  getBookingLocalParts,
+} from '@/lib/utils/timezone';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const TIME_GUTTER = 48;
@@ -192,11 +196,21 @@ function WeekView({
 
   const rangeLabel = `${weekDates[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${weekDates[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
 
+  // Day bucketing must use the barber's tz, not the device's. Two bookings
+  // on the same barber-local day must group together even if the device
+  // straddles a UTC day boundary.
   const weekBookings = useMemo(
     () =>
-      bookings.filter((b) =>
-        weekDates.some((d) => isSameDay(new Date(b.scheduledAt), d)),
-      ),
+      bookings.filter((b) => {
+        const parts = getBookingLocalParts(b);
+        if (!parts) return false;
+        return weekDates.some(
+          (d) =>
+            d.getFullYear() === parts.year &&
+            d.getMonth() + 1 === parts.month &&
+            d.getDate() === parts.day,
+        );
+      }),
     [bookings, weekDates],
   );
 
@@ -234,9 +248,15 @@ function WeekView({
             <View style={{ width: TIME_GUTTER }} />
             {weekDates.map((d, i) => {
               const isToday = isSameDay(d, today);
-              const dayHasBooking = bookings.some((b) =>
-                isSameDay(new Date(b.scheduledAt), d),
-              );
+              const dayHasBooking = bookings.some((b) => {
+                const p = getBookingLocalParts(b);
+                return (
+                  !!p &&
+                  d.getFullYear() === p.year &&
+                  d.getMonth() + 1 === p.month &&
+                  d.getDate() === p.day
+                );
+              });
               return (
                 <View
                   key={i}
@@ -383,21 +403,34 @@ function WeekView({
 
             {/* Bookings */}
             {weekBookings.map((b) => {
-              const start = new Date(b.scheduledAt);
-              const dayIdx = weekDates.findIndex((d) => isSameDay(d, start));
+              // Position by barber timezone, not device local time — a barber
+              // checking the calendar from a different timezone must still
+              // see slots at the same calendar position.
+              const parts = getBookingLocalParts(b);
+              if (!parts) return null;
+              const dayIdx = weekDates.findIndex(
+                (d) =>
+                  d.getFullYear() === parts.year &&
+                  d.getMonth() + 1 === parts.month &&
+                  d.getDate() === parts.day,
+              );
               if (dayIdx < 0) return null;
               const startMinutes =
-                (start.getHours() - START_HOUR) * 60 + start.getMinutes();
-              const duration = Math.max(15, b.service.durationMinutes);
+                (parts.hour - START_HOUR) * 60 + parts.minute;
+              // Full block duration. Backend now sends totalDurationMinutes
+              // for multi-service blocks; legacy service.durationMinutes is
+              // also the total block on new responses; old payloads fall back
+              // to single-service nominal duration.
+              const duration = Math.max(
+                15,
+                b.totalDurationMinutes ?? b.service.durationMinutes,
+              );
               if (startMinutes < 0 || startMinutes >= HOURS.length * 60)
                 return null;
               const top = (startMinutes / 60) * HOUR_HEIGHT;
               const height = Math.max(34, (duration / 60) * HOUR_HEIGHT - 2);
               const tc = TYPE_COLORS[b.bookingType] ?? '#30D158';
-              const timeLabel = start.toLocaleTimeString('en-US', {
-                hour: 'numeric',
-                minute: '2-digit',
-              });
+              const timeLabel = formatBookingTime(b);
               return (
                 <Pressable
                   key={b.id}
@@ -436,7 +469,10 @@ function WeekView({
                       className="text-2xs font-semibold mt-[1px]"
                       numberOfLines={1}
                     >
-                      {b.service.name} · ${b.totalPrice}
+                      {b.services && b.services.length > 1
+                        ? b.services.map((s) => s.name).join(' + ')
+                        : b.service.name}{' '}
+                      · ${b.totalPrice}
                     </Text>
                   )}
                 </Pressable>
@@ -475,15 +511,17 @@ function MonthView({
     year: 'numeric',
   });
 
+  // Group by barber-local calendar, never the device's.
   const bookingDays = useMemo(() => {
     const set = new Set<number>();
     bookings.forEach((b) => {
-      const bd = new Date(b.scheduledAt);
+      const p = getBookingLocalParts(b);
       if (
-        bd.getMonth() === baseDate.getMonth() &&
-        bd.getFullYear() === baseDate.getFullYear()
+        p &&
+        p.month - 1 === baseDate.getMonth() &&
+        p.year === baseDate.getFullYear()
       ) {
-        set.add(bd.getDate());
+        set.add(p.day);
       }
     });
     return set;
@@ -493,11 +531,12 @@ function MonthView({
     if (selectedDay === null) return [];
     return bookings
       .filter((b) => {
-        const bd = new Date(b.scheduledAt);
+        const p = getBookingLocalParts(b);
         return (
-          bd.getDate() === selectedDay &&
-          bd.getMonth() === baseDate.getMonth() &&
-          bd.getFullYear() === baseDate.getFullYear()
+          !!p &&
+          p.day === selectedDay &&
+          p.month - 1 === baseDate.getMonth() &&
+          p.year === baseDate.getFullYear()
         );
       })
       .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
@@ -612,15 +651,16 @@ function MonthView({
           ) : (
             <View className="gap-2">
               {selectedBookings.map((b) => {
-                const time = new Date(b.scheduledAt).toLocaleTimeString('en-US', {
-                  hour: 'numeric',
-                  minute: '2-digit',
-                });
+                const time = formatBookingTime(b);
+                const serviceName =
+                  b.services && b.services.length > 1
+                    ? b.services.map((s) => s.name).join(' + ')
+                    : b.service.name;
                 return (
                   <BookingCard
                     key={b.id}
                     clientName={b.client.name}
-                    serviceName={b.service.name}
+                    serviceName={serviceName}
                     time={time}
                     price={b.totalPrice}
                     bookingType={b.bookingType}
