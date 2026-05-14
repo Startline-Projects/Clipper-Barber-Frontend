@@ -15,6 +15,7 @@ interface OnboardingDraft {
     longitude?: number;
   };
   step3?: { bio?: string; instagramHandle?: string };
+  step4?: { categories?: string[] };
 }
 
 interface OnboardingState {

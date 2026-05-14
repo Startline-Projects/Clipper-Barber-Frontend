@@ -134,7 +134,7 @@ export default function SignupStep1Screen() {
 
           {/* Progress bar */}
           <View className="flex-row gap-[6px] mb-2">
-            {[0, 1, 2].map((i) => (
+            {[0, 1, 2, 3].map((i) => (
               <View
                 key={i}
                 className={`flex-1 h-[3px] rounded-full ${
@@ -144,7 +144,7 @@ export default function SignupStep1Screen() {
             ))}
           </View>
           <Text className="text-xs font-semibold text-tertiary tracking-[0.6px] uppercase mb-5">
-            Step 1 of 3
+            Step 1 of 4
           </Text>
 
           <Text className="text-3xl font-extrabold text-ink tracking-[-0.5px] mb-5">

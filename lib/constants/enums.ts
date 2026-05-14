@@ -17,6 +17,7 @@ import type {
   SortOrder,
   AnalyticsPeriod,
   ThemePreference,
+  BarberCategoryTag,
 } from '@/lib/schemas/enums';
 
 export type ServiceType = z.infer<typeof ServiceType>;
@@ -36,3 +37,4 @@ export type ClientSortBy = z.infer<typeof ClientSortBy>;
 export type SortOrder = z.infer<typeof SortOrder>;
 export type AnalyticsPeriod = z.infer<typeof AnalyticsPeriod>;
 export type ThemePreference = z.infer<typeof ThemePreference>;
+export type BarberCategoryTag = z.infer<typeof BarberCategoryTag>;

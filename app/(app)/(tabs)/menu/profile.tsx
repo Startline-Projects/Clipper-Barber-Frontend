@@ -22,10 +22,16 @@ import Btn from '@/components/ui/Btn';
 import TextField from '@/components/forms/TextField';
 import AddressAutocomplete from '@/components/forms/AddressAutocomplete';
 import LocationPicker from '@/components/forms/LocationPicker';
+import CategorySelector from '@/components/forms/CategorySelector';
 import Avatar from '@/components/ui/Avatar';
 import Icon from '@/components/ui/Icon';
 import { useColors } from '@/lib/theme/colors';
-import { useProfile, useUpdateProfile } from '@/lib/hooks/useProfile';
+import {
+  useProfile,
+  useUpdateProfile,
+  useUpdateCategories,
+} from '@/lib/hooks/useProfile';
+import type { BarberCategoryTag } from '@/lib/constants/enums';
 import { getReadableError } from '@/lib/utils/get-readable-error';
 import { toast } from '@/lib/stores/toast';
 import type { RNFile } from '@/lib/api/auth';
@@ -64,6 +70,7 @@ export default function ProfileScreen() {
   const colors = useColors();
   const { data: profile, isLoading, isError, error, refetch } = useProfile();
   const update = useUpdateProfile();
+  const updateCategories = useUpdateCategories();
 
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(async () => {
@@ -83,6 +90,7 @@ export default function ProfileScreen() {
   const [longitude, setLongitude] = useState<number | null>(null);
   const [bio, setBio] = useState('');
   const [instagram, setInstagram] = useState('');
+  const [categories, setCategories] = useState<BarberCategoryTag[]>([]);
   const [photo, setPhoto] = useState<RNFile | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const photoSheetRef = useRef<BottomSheet>(null);
@@ -109,6 +117,7 @@ export default function ProfileScreen() {
     setLongitude(profile.longitude);
     setBio(profile.bio ?? '');
     setInstagram(profile.instagram_handle ?? '');
+    setCategories(profile.categories ?? []);
     setHydrated(true);
   }
 
@@ -143,7 +152,13 @@ export default function ProfileScreen() {
     );
   }
 
+  // CategorySelector keeps the array in canonical order, and the API returns
+  // it the same way, so a string compare is a reliable dirty check.
+  const categoriesDirty =
+    categories.join(',') !== (profile.categories ?? []).join(',');
+
   const dirty =
+    categoriesDirty ||
     fullName !== (profile.full_name ?? '') ||
     shopName !== (profile.shop_name ?? '') ||
     phone !== (profile.phone ?? '') ||
@@ -156,6 +171,8 @@ export default function ProfileScreen() {
     bio !== (profile.bio ?? '') ||
     instagram !== (profile.instagram_handle ?? '') ||
     photo !== null;
+
+  const saving = update.isPending || updateCategories.isPending;
 
   const clearError = (field: keyof FieldErrors) => {
     if (errors[field]) setErrors((e) => ({ ...e, [field]: undefined }));
@@ -226,31 +243,49 @@ export default function ProfileScreen() {
     return Object.keys(e).length === 0;
   };
 
-  const handleSave = () => {
-    if (update.isPending) return;
+  const handleSave = async () => {
+    if (update.isPending || updateCategories.isPending) return;
     if (!validate()) return;
-    update.mutate(
-      {
-        fullName: fullName.trim(),
-        shopName: shopName.trim(),
-        phone: phone.trim(),
-        streetAddress: streetAddress.trim(),
-        city: city.trim(),
-        state: state.trim().toUpperCase(),
-        zipCode: zipCode.trim(),
-        latitude: latitude as number,
-        longitude: longitude as number,
-        bio: bio.trim() || undefined,
-        instagramHandle: instagram.trim().replace(/^@/, '') || undefined,
-        photo: photo ?? undefined,
-      },
-      {
-        onSuccess: () => {
-          toast.success('Profile saved');
-          router.back();
-        },
-      },
-    );
+
+    const profileFieldsDirty =
+      fullName !== (profile.full_name ?? '') ||
+      shopName !== (profile.shop_name ?? '') ||
+      phone !== (profile.phone ?? '') ||
+      streetAddress !== (profile.street_address ?? '') ||
+      city !== (profile.city ?? '') ||
+      state !== (profile.state ?? '') ||
+      zipCode !== (profile.zip_code ?? '') ||
+      latitude !== profile.latitude ||
+      longitude !== profile.longitude ||
+      bio !== (profile.bio ?? '') ||
+      instagram !== (profile.instagram_handle ?? '') ||
+      photo !== null;
+
+    try {
+      if (profileFieldsDirty) {
+        await update.mutateAsync({
+          fullName: fullName.trim(),
+          shopName: shopName.trim(),
+          phone: phone.trim(),
+          streetAddress: streetAddress.trim(),
+          city: city.trim(),
+          state: state.trim().toUpperCase(),
+          zipCode: zipCode.trim(),
+          latitude: latitude as number,
+          longitude: longitude as number,
+          bio: bio.trim() || undefined,
+          instagramHandle: instagram.trim().replace(/^@/, '') || undefined,
+          photo: photo ?? undefined,
+        });
+      }
+      if (categoriesDirty) {
+        await updateCategories.mutateAsync(categories);
+      }
+      toast.success('Profile saved');
+      router.back();
+    } catch (err) {
+      toast.error(getReadableError(err));
+    }
   };
 
   const pickFromLibrary = async () => {
@@ -462,10 +497,20 @@ export default function ProfileScreen() {
             </View>
           </Section>
 
+          <Section title="Specialties">
+            <Text className="text-sm text-tertiary leading-[18px] tracking-[-0.05px] mb-3">
+              Tag the services and specialties you offer. Clients use these to
+              find you. Tap to add or remove — leave empty to clear them all.
+            </Text>
+            <CategorySelector value={categories} onChange={setCategories} />
+          </Section>
+
           <Btn
-            label={update.isPending ? 'Saving...' : dirty ? 'Save Changes' : 'Saved'}
+            label={
+              saving ? 'Saving...' : dirty ? 'Save Changes' : 'Saved'
+            }
             full
-            disabled={!dirty || update.isPending}
+            disabled={!dirty || saving}
             onPress={handleSave}
           />
           <View className="mt-2 mb-8">

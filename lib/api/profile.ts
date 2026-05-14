@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { apiClient } from './client';
 import type { RNFile } from './auth';
+import { BarberCategoryTag } from '@/lib/schemas/enums';
 
 // ---------- Response schemas ----------
 
@@ -22,6 +23,9 @@ const ProfileSchema = z.object({
   profile_photo_url: z.string().nullable(),
   onboarding_step: z.number(),
   onboarding_complete: z.boolean(),
+  // Defaults to [] when the barber has no categories. `.catch([])` guards
+  // against a null coming back from older rows.
+  categories: z.array(BarberCategoryTag).nullish().transform((v) => v ?? []),
   created_at: z.string(),
   // Settings — not in the profile GET response, but patched into cache
   // by settings mutations so the UI reads from one source.
@@ -55,6 +59,8 @@ export interface UpdateProfileBody {
   bio?: string;
   instagramHandle?: string;
 }
+
+export type BarberCategoryTagValue = z.infer<typeof BarberCategoryTag>;
 
 interface RequestOptions {
   signal?: AbortSignal;
@@ -114,5 +120,21 @@ export async function updateProfile(
   const { data: res } = await apiClient.patch('/barber/profile', jsonBody, {
     signal: opts.signal,
   });
+  return ProfileSchema.parse(extractPayload(res));
+}
+
+/**
+ * Dedicated category/specialty-tag edit endpoint. The supplied array fully
+ * replaces the current selection; `[]` clears all tags.
+ */
+export async function updateCategories(
+  categories: BarberCategoryTagValue[],
+  opts: RequestOptions = {},
+): Promise<BarberProfile> {
+  const { data: res } = await apiClient.patch(
+    '/barber/profile/categories',
+    { categories },
+    { signal: opts.signal },
+  );
   return ProfileSchema.parse(extractPayload(res));
 }

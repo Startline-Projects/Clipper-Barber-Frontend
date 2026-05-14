@@ -99,8 +99,9 @@ export default function SignupStep3Screen() {
       },
       {
         onSuccess: () => {
-          clearDraft();
-          router.replace('/(app)/(tabs)/today');
+          // Onboarding is complete after step 3; step 4 (categories) is an
+          // optional extra the barber can skip.
+          router.push('/(auth)/signup/step4');
         },
         onError: () => toast.error('Save failed. Please try again.'),
       },
@@ -131,15 +132,17 @@ export default function SignupStep3Screen() {
 
           {/* Progress bar */}
           <View className="flex-row gap-[6px] mb-2 mt-2">
-            {[0, 1, 2].map((i) => (
+            {[0, 1, 2, 3].map((i) => (
               <View
                 key={i}
-                className="flex-1 h-[3px] rounded-full bg-ink"
+                className={`flex-1 h-[3px] rounded-full ${
+                  i <= 2 ? 'bg-ink' : 'bg-separator-opaque'
+                }`}
               />
             ))}
           </View>
           <Text className="text-xs font-semibold text-tertiary tracking-[0.6px] uppercase mb-5">
-            Step 3 of 3
+            Step 3 of 4
           </Text>
 
           <Text className="text-3xl font-extrabold text-ink tracking-[-0.5px] mb-6">
@@ -222,7 +225,7 @@ export default function SignupStep3Screen() {
             </View>
             <View className="flex-[2]">
               <Btn
-                label={signup.isPending ? 'Finishing...' : 'Get Started'}
+                label={signup.isPending ? 'Saving...' : 'Continue'}
                 full
                 onPress={handleFinish}
                 disabled={signup.isPending}

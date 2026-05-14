@@ -59,6 +59,16 @@ export function useSignupStep3() {
   });
 }
 
+export function useSignupStep4() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: authApi.SignupStep4Body) => authApi.signupStep4(body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.profile.me() });
+    },
+  });
+}
+
 export function useLogout() {
   const qc = useQueryClient();
   return useMutation({

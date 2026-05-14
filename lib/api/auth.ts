@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { apiClient } from './client';
+import type { BarberCategoryTag } from '@/lib/constants/enums';
 
 // ---------- Response schemas ----------
 
@@ -59,6 +60,11 @@ export interface SignupStep3Body {
   instagramHandle?: string;
 }
 
+export interface SignupStep4Body {
+  /** Optional & skippable — omit or pass [] to leave the selection empty. */
+  categories?: BarberCategoryTag[];
+}
+
 export interface LoginBody {
   email: string;
   password: string;
@@ -116,6 +122,22 @@ export async function signupStep3(
     signal: opts.signal,
     headers: { 'Content-Type': 'multipart/form-data' },
   });
+}
+
+/**
+ * Barber signup step 4 — category/specialty tags. Optional & skippable;
+ * onboarding is already complete after step 3, so this does not change
+ * onboarding state. The same tags are editable later from the profile.
+ */
+export async function signupStep4(
+  body: SignupStep4Body,
+  opts: RequestOptions = {},
+): Promise<void> {
+  await apiClient.post(
+    '/auth/barber/step4',
+    { categories: body.categories ?? [] },
+    { signal: opts.signal },
+  );
 }
 
 export async function login(

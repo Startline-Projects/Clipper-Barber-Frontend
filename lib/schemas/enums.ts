@@ -45,3 +45,19 @@ export const SortOrder = z.enum(["asc", "desc"]);
 export const AnalyticsPeriod = z.enum(["week", "month", "year"]);
 
 export const ThemePreference = z.enum(["system", "light", "dark"]);
+
+export const BarberCategoryTag = z.enum([
+	"ALL_GENDER_CUTS",
+	"KIDS_CUTS",
+	"CURLY_HAIR_SPECIALIST",
+	"AFRO_HAIR_SPECIALIST",
+	"BRAIDS",
+	"BEARD_SPECIALIST",
+	"SKIN_FADES",
+	"WOMENS_HAIRCUTS",
+	"LOCS_DREADLOCKS",
+	"HAIR_DESIGN",
+	"SHAVES",
+	"MOBILE_BARBER",
+	"IN_HOUSE_SERVICES",
+]);

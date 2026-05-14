@@ -53,3 +53,28 @@ export function useUpdateProfile() {
     onSettled: () => invalidations.profileUpdated(qc),
   });
 }
+
+export function useUpdateCategories() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (categories: profileApi.BarberCategoryTagValue[]) =>
+      profileApi.updateCategories(categories),
+    onMutate: async (categories) => {
+      await qc.cancelQueries({ queryKey: queryKeys.profile.me() });
+      const previous = qc.getQueryData<Profile>(queryKeys.profile.me());
+      if (previous) {
+        qc.setQueryData<Profile>(queryKeys.profile.me(), {
+          ...previous,
+          categories,
+        });
+      }
+      return { previous };
+    },
+    onError: (_err, _categories, ctx) => {
+      if (ctx?.previous) {
+        qc.setQueryData(queryKeys.profile.me(), ctx.previous);
+      }
+    },
+    onSettled: () => invalidations.profileUpdated(qc),
+  });
+}
