@@ -28,6 +28,7 @@ export const NotificationType = z.enum([
 	"new_recurring_request",
 	"recurring_cancelled",
 	"recurring_paused",
+	"recurring_resumed",
 	"new_message",
 	"booking_confirmed",
 	"booking_cancelled",

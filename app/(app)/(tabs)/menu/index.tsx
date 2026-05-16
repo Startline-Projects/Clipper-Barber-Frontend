@@ -13,13 +13,16 @@ import { useColors } from "@/lib/theme/colors";
 import { useProfile } from "@/lib/hooks/useProfile";
 import { useReviewsAnalytics } from "@/lib/hooks/useReviews";
 import { useLogout } from "@/lib/hooks/useAuth";
+import { useAuthStore } from "@/lib/stores/auth.store";
+import { resendVerification } from "@/lib/api/auth";
 import type { IconName } from "@/components/ui/Icon";
 
 interface MenuItem {
 	label: string;
 	sub: string;
 	icon: IconName;
-	route: string;
+	route?: string;
+	onPress?: () => void;
 	warn?: boolean;
 	danger?: boolean;
 }
@@ -30,6 +33,34 @@ export default function MenuScreen() {
 	const { data: profile, refetch: refetchProfile } = useProfile();
 	const { data: analytics, refetch: refetchAnalytics } = useReviewsAnalytics();
 	const logout = useLogout();
+	const email = useAuthStore((s) => s.email);
+	const emailVerified = useAuthStore((s) => s.emailVerified);
+	const [resending, setResending] = useState(false);
+
+	const handleVerifyEmail = async () => {
+		if (emailVerified === true) {
+			Alert.alert("Email verified", "Your email is already verified.");
+			return;
+		}
+		const target = email ?? profile?.email;
+		if (!target) {
+			Alert.alert("Missing email", "No email on file for this account.");
+			return;
+		}
+		try {
+			setResending(true);
+			await resendVerification({ email: target });
+			Alert.alert(
+				"Verification email sent",
+				`We sent a verification link to ${target}. Tap it to verify your address.`,
+			);
+		} catch (e) {
+			const msg = (e as Error)?.message ?? "Please try again.";
+			Alert.alert("Could not send", msg);
+		} finally {
+			setResending(false);
+		}
+	};
 
 	const [refreshing, setRefreshing] = useState(false);
 	const onRefresh = useCallback(async () => {
@@ -81,6 +112,17 @@ export default function MenuScreen() {
 			route: "/(app)/(tabs)/menu/in-house-services",
 		},
 		{ label: "Notification Settings", sub: "Push preferences", icon: "bell", route: "/(app)/(tabs)/menu/notification-settings" },
+		{
+			label: "Verify Email",
+			sub: resending
+				? "Sending verification email…"
+				: emailVerified === true
+					? "Email verified"
+					: "Send verification link to your email",
+			icon: "shield",
+			onPress: handleVerifyEmail,
+			warn: emailVerified === false,
+		},
 		{ label: "Change Password", sub: "Update your password", icon: "shield", route: "/(app)/(tabs)/menu/change-password" },
 	];
 
@@ -117,7 +159,7 @@ export default function MenuScreen() {
 					{items.map((it, i) => (
 						<Pressable
 							key={it.label}
-							onPress={() => router.push(it.route as any)}
+							onPress={() => (it.onPress ? it.onPress() : it.route && router.push(it.route as any))}
 							className={`flex-row items-center gap-[14px] px-4 py-[15px] ${i < items.length - 1 ? "border-b border-separator" : ""}`}>
 							<View className={`w-[34px] h-[34px] rounded-xs items-center justify-center ${it.warn ? "bg-orange/12" : "bg-bg"}`}>
 								<Icon name={it.icon} size={18} color={it.warn ? colors.orange : colors.secondary} />

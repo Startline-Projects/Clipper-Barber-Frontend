@@ -128,7 +128,7 @@ export default function RecurringDetailScreen() {
       {
         onSuccess: () => {
           setPauseDrawer(false);
-          toast.success('Recurring paused');
+          toast.success('Recurring paused — client notified');
         },
       },
     );
@@ -171,7 +171,11 @@ export default function RecurringDetailScreen() {
 
         {/* Client + status */}
         <View className="items-center pb-4">
-          <Avatar name={r.client.name} size={64} />
+          <Avatar
+            name={r.client.name}
+            size={64}
+            uri={r.clientProfilePhotoUrl ?? undefined}
+          />
           <Text className="text-2xl font-bold text-ink tracking-[-0.4px] mt-3">
             {r.client.name}
           </Text>

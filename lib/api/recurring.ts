@@ -47,6 +47,7 @@ const OccurrenceSchema = z.object({
 
 const RecurringDetailSchema = z.object({
   recurringBooking: RecurringListItemSchema.extend({
+    clientProfilePhotoUrl: z.string().nullable().optional(),
     services: z.array(z.object({
       id: z.string(),
       name: z.string(),

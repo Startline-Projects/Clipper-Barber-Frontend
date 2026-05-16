@@ -4,6 +4,9 @@ import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { registerDeviceToken, removeDeviceToken } from '@/lib/api/device-token';
+import { queryClient } from '@/lib/utils/query-client';
+import { queryKeys } from '@/lib/hooks/queryKeys';
+import { toast } from '@/lib/stores/toast';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -100,12 +103,52 @@ export function handleNotificationTap(
   router.push('/(app)/(tabs)/today/notifications');
 }
 
+function handleForegroundNotification(
+  notification: Notifications.Notification,
+): void {
+  const data = notification.request.content.data as Record<
+    string,
+    string | undefined
+  >;
+  const type = data?.type;
+
+  switch (type) {
+    case 'recurring_resumed': {
+      const clientName = data.clientName ?? 'A client';
+      toast.success(
+        `${clientName} has resumed your recurring arrangement.`,
+      );
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.recurring.lists(),
+      });
+      if (data.recurringBookingId) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.recurring.detail(data.recurringBookingId),
+        });
+      }
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.notifications.lists(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.notifications.unreadCount(),
+      });
+      return;
+    }
+    default:
+      return;
+  }
+}
+
 export function setupNotificationListeners(): () => void {
   const tapSub = Notifications.addNotificationResponseReceivedListener(
     handleNotificationTap,
   );
+  const receivedSub = Notifications.addNotificationReceivedListener(
+    handleForegroundNotification,
+  );
 
   return () => {
     tapSub.remove();
+    receivedSub.remove();
   };
 }

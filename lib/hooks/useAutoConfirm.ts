@@ -1,10 +1,8 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { create } from 'zustand';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { z } from 'zod';
-import { apiClient } from '@/lib/api/client';
-import { useAuthStore } from '@/lib/stores/auth.store';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as settingsApi from '@/lib/api/settings';
+import { useBarberHome, BARBER_HOME_QUERY_KEY } from '@/lib/hooks/useBarberHome';
 
 interface AutoConfirmState {
   allowAutoConfirm: boolean;
@@ -25,36 +23,18 @@ const useAutoConfirmStore = create<AutoConfirmState>((set) => ({
   setToday: (v) => set({ autoConfirmToday: v }),
 }));
 
-const HomeSeedSchema = z.object({
-  allowAutoConfirm: z.boolean(),
-  autoConfirmToday: z.boolean(),
-});
-
-async function fetchHomeSettingsSeed(signal?: AbortSignal) {
-  const { data } = await apiClient.get('/barber/home', { signal });
-  return HomeSeedSchema.parse(data);
-}
-
 export function useAutoConfirm() {
   const qc = useQueryClient();
-  const hasTokens = useAuthStore((s) => Boolean(s.accessToken));
   const allowAutoConfirm = useAutoConfirmStore((s) => s.allowAutoConfirm);
   const autoConfirmToday = useAutoConfirmStore((s) => s.autoConfirmToday);
   const setBoth = useAutoConfirmStore((s) => s.setBoth);
   const setAllow = useAutoConfirmStore((s) => s.setAllow);
   const setToday = useAutoConfirmStore((s) => s.setToday);
 
-  useQuery({
-    queryKey: ['barber', 'home', 'autoConfirmSeed'],
-    queryFn: async ({ signal }) => {
-      const seed = await fetchHomeSettingsSeed(signal);
-      setBoth(seed.allowAutoConfirm, seed.autoConfirmToday);
-      return seed;
-    },
-    enabled: hasTokens,
-    staleTime: 60_000,
-    retry: false,
-  });
+  const { data: home } = useBarberHome();
+  useEffect(() => {
+    if (home) setBoth(home.allowAutoConfirm, home.autoConfirmToday);
+  }, [home, setBoth]);
 
   const allowMutation = useMutation({
     mutationFn: (enabled: boolean) => settingsApi.toggleAutoConfirm(enabled),
@@ -71,7 +51,7 @@ export function useAutoConfirm() {
     },
     onSuccess: (res) => {
       setBoth(res.allowAutoConfirm, res.autoConfirmToday);
-      qc.invalidateQueries({ queryKey: ['barber', 'home'] });
+      qc.invalidateQueries({ queryKey: BARBER_HOME_QUERY_KEY });
     },
   });
 
@@ -90,7 +70,7 @@ export function useAutoConfirm() {
     },
     onSuccess: (res) => {
       setBoth(res.allowAutoConfirm, res.autoConfirmToday);
-      qc.invalidateQueries({ queryKey: ['barber', 'home'] });
+      qc.invalidateQueries({ queryKey: BARBER_HOME_QUERY_KEY });
     },
   });
 

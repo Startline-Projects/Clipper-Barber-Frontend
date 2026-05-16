@@ -28,6 +28,7 @@ const TYPE_COLORS: Record<string, string> = {
   new_recurring_request: '#BF5AF2',
   recurring_cancelled: '#FF453A',
   recurring_paused: '#FF9F0A',
+  recurring_resumed: '#30D158',
   new_message: '#0A84FF',
   booking_confirmed: '#30D158',
   booking_cancelled: '#FF453A',

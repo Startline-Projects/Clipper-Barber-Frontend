@@ -19,9 +19,11 @@ export function useLogin() {
   return useMutation({
     mutationFn: (body: authApi.LoginBody) => authApi.login(body),
     onSuccess: async (res) => {
-      const { setTokens, setUser, markLaunched } = useAuthStore.getState();
+      const { setTokens, setUser, setEmail, markLaunched } =
+        useAuthStore.getState();
       await setTokens(res.accessToken, res.refreshToken);
       setUser({ id: res.id, email: res.email, username: res.username });
+      await setEmail(res.email);
       await markLaunched();
       qc.invalidateQueries({ queryKey: queryKeys.profile.me() });
     },
@@ -31,11 +33,33 @@ export function useLogin() {
 export function useSignupStep1() {
   return useMutation({
     mutationFn: (body: authApi.SignupStep1Body) => authApi.signupStep1(body),
-    onSuccess: async (res) => {
-      const { setTokens, markLaunched } = useAuthStore.getState();
+    onSuccess: async (res, vars) => {
+      const { setTokens, setEmail, setEmailVerified, markLaunched } =
+        useAuthStore.getState();
       await setTokens(res.accessToken, res.refreshToken);
+      await setEmail(vars.email);
+      // Backend now creates barbers as unverified after step1; a confirmation
+      // email is dispatched. Surface that state in the UI until the user taps
+      // the deep link.
+      await setEmailVerified(false);
       await markLaunched();
     },
+  });
+}
+
+export function useVerifyEmail() {
+  return useMutation({
+    mutationFn: (body: { token: string; type?: 'signup' | 'email' }) =>
+      authApi.verifyEmail(body),
+    onSuccess: async () => {
+      await useAuthStore.getState().setEmailVerified(true);
+    },
+  });
+}
+
+export function useResendVerification() {
+  return useMutation({
+    mutationFn: (body: { email: string }) => authApi.resendVerification(body),
   });
 }
 

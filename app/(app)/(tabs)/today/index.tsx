@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -12,13 +12,19 @@ import Icon from "@/components/ui/Icon";
 import Divider from "@/components/ui/Divider";
 import Toggle from "@/components/ui/Toggle";
 import SetupAlerts from "@/components/ui/SetupAlerts";
+import EmailVerificationBanner from "@/components/ui/EmailVerificationBanner";
+import { formatUsd } from "@/lib/utils/format";
 import { useColors } from "@/lib/theme/colors";
-import { useBookings, useConfirmBooking, useCancelBooking } from "@/lib/hooks/useBookings";
+import { useConfirmBooking, useCancelBooking } from "@/lib/hooks/useBookings";
 import { useUnreadCount } from "@/lib/hooks/useNotifications";
 import { useAutoConfirm } from "@/lib/hooks/useAutoConfirm";
+import { useBarberHome } from "@/lib/hooks/useBarberHome";
 import { useProfile } from "@/lib/hooks/useProfile";
 import { toast } from "@/lib/stores/toast";
-import type { BookingListItem } from "@/lib/api/bookings";
+import type {
+	BarberHomePendingItem,
+	BarberHomeScheduleItem,
+} from "@/lib/api/home";
 import type { ErrorBoundaryProps } from 'expo-router';
 import { SkeletonBookingCard } from "@/components/feedback/Skeleton";
 
@@ -40,9 +46,11 @@ const TYPE_BAR_COLORS: Record<string, string> = {
 	day_off: "#BF5AF2",
 };
 
-import { formatBookingTime } from "@/lib/utils/timezone";
+import { formatBookingTime, type BookingTimeFields } from "@/lib/utils/timezone";
 
-function formatTime(b: BookingListItem) {
+type HomeItem = BarberHomePendingItem | BarberHomeScheduleItem;
+
+function formatTime(b: BookingTimeFields) {
 	// Always render in barber timezone; never the device's.
 	const formatted = formatBookingTime(b);
 	const m = /^([0-9]+:[0-9]+)\s*(AM|PM)$/i.exec(formatted);
@@ -50,11 +58,15 @@ function formatTime(b: BookingListItem) {
 	return { time: formatted, ampm: "" };
 }
 
-function joinedServiceName(b: BookingListItem): string {
+function joinedServiceName(b: HomeItem): string {
 	if (b.services && b.services.length > 1) {
 		return b.services.map((s) => s.name).join(" + ");
 	}
-	return b.service.name;
+	return b.service?.name ?? b.services[0]?.name ?? "Service";
+}
+
+function primaryBookingType(b: HomeItem): string {
+	return b.services[0]?.bookingType ?? "regular";
 }
 
 function formatHeaderDate() {
@@ -75,9 +87,7 @@ export default function TodayScreen() {
 	const { allowAutoConfirm, autoConfirmToday, mutateAutoConfirm, mutateAutoConfirmToday } = useAutoConfirm();
 	const { data: profile } = useProfile();
 
-	const { data, isLoading, refetch } = useBookings({
-		timeframe: "upcoming",
-	});
+	const { data: home, isLoading, refetch } = useBarberHome();
 
 	const [refreshing, setRefreshing] = useState(false);
 	const onRefresh = useCallback(async () => {
@@ -86,11 +96,10 @@ export default function TodayScreen() {
 		setRefreshing(false);
 	}, [refetch]);
 
-	const allBookings = useMemo(() => data?.pages.flatMap((p) => p.bookings) ?? [], [data]);
-
-	const pending = useMemo(() => allBookings.filter((b) => b.status === "pending"), [allBookings]);
-	const confirmed = useMemo(() => allBookings.filter((b) => b.status === "confirmed"), [allBookings]);
-	const earnings = useMemo(() => confirmed.reduce((s, b) => s + b.totalPrice, 0), [confirmed]);
+	const pending = home?.pendingApproval.items ?? [];
+	const confirmed = home?.schedule.items ?? [];
+	const totalAppointments = home?.today.totalAppointments ?? 0;
+	const earningsToday = home?.today.earningsSoFarUsd ?? 0;
 
 	const unreadCount = unread.data ?? 0;
 
@@ -125,10 +134,12 @@ export default function TodayScreen() {
 					className="mb-xl"
 				/>
 
+				<EmailVerificationBanner className="mb-xl" />
+
 				{/* Stats */}
 				<View className="flex-row gap-[10px] mb-xl">
-					<StatCard value={allBookings.filter((b) => b.status !== "cancelled").length} label="Appointments" dark />
-					<StatCard value={`$${earnings}`} label="Earnings" />
+					<StatCard value={totalAppointments} label="Appointments" dark />
+					<StatCard value={formatUsd(earningsToday)} label="Today's Earnings" />
 				</View>
 
 				{/* Pending */}
@@ -136,15 +147,15 @@ export default function TodayScreen() {
 					<Section title="Pending">
 						{pending.map((b) => (
 							<PendingCard
-								key={b.id}
+								key={b.bookingId}
 								booking={b}
 								onAccept={() =>
-									confirm.mutate(b.id, {
+									confirm.mutate(b.bookingId, {
 										onSuccess: () => toast.success("Booking confirmed"),
 									})
 								}
 								onDecline={() =>
-									cancel.mutate(b.id, {
+									cancel.mutate(b.bookingId, {
 										onSuccess: () => toast.success("Booking declined"),
 									})
 								}
@@ -162,7 +173,7 @@ export default function TodayScreen() {
 							</View>
 						)}
 						{confirmed.map((b, i) => (
-							<ScheduleRow key={b.id} booking={b} last={i === confirmed.length - 1} onPress={() => router.push(`/(app)/(tabs)/today/${b.id}`)} />
+							<ScheduleRow key={b.bookingId} booking={b} last={i === confirmed.length - 1} onPress={() => router.push(`/(app)/(tabs)/today/${b.bookingId}`)} />
 						))}
 					</Card>
 				</Section>
@@ -181,24 +192,25 @@ export default function TodayScreen() {
 	);
 }
 
-function PendingCard({ booking: b, onAccept, onDecline }: { booking: BookingListItem; onAccept: () => void; onDecline: () => void }) {
+function PendingCard({ booking: b, onAccept, onDecline }: { booking: BarberHomePendingItem; onAccept: () => void; onDecline: () => void }) {
 	const colors = useColors();
 	const { time, ampm } = formatTime(b);
+	const bookingType = primaryBookingType(b);
 
 	return (
 		<Card elevated>
 			<View className="flex-row items-center gap-3 mb-[14px]">
-				<Avatar name={b.client.name} size={40} />
+				<Avatar name={b.client.fullName} size={40} />
 				<View className="flex-1">
-					<Text className="text-lg font-semibold text-ink tracking-[-0.2px]">{b.client.name}</Text>
+					<Text className="text-lg font-semibold text-ink tracking-[-0.2px]">{b.client.fullName}</Text>
 					<View className="flex-row items-center gap-[6px] mt-[3px]">
 						<Text className="text-base text-secondary">
 							{joinedServiceName(b)} · {time} {ampm}
 						</Text>
-						<TypeBadge type={b.bookingType} />
+						<TypeBadge type={bookingType} />
 					</View>
 				</View>
-				<Text className="text-xl font-bold text-ink tracking-[-0.3px]">${b.totalPrice}</Text>
+				<Text className="text-xl font-bold text-ink tracking-[-0.3px]">${b.priceUsd}</Text>
 			</View>
 
 			<View className="flex-row gap-2">
@@ -215,10 +227,10 @@ function PendingCard({ booking: b, onAccept, onDecline }: { booking: BookingList
 	);
 }
 
-function ScheduleRow({ booking: b, last, onPress }: { booking: BookingListItem; last: boolean; onPress: () => void }) {
+function ScheduleRow({ booking: b, last, onPress }: { booking: BarberHomeScheduleItem; last: boolean; onPress: () => void }) {
 	const { time, ampm } = formatTime(b);
-	const barColor = TYPE_BAR_COLORS[b.bookingType] ?? "#30D158";
-	const colors = useColors();
+	const bookingType = primaryBookingType(b);
+	const barColor = TYPE_BAR_COLORS[bookingType] ?? "#30D158";
 
 	return (
 		<Pressable onPress={onPress} className={`flex-row items-center gap-[14px] px-4 py-[14px] ${!last ? "border-b border-separator" : ""}`}>
@@ -230,17 +242,14 @@ function ScheduleRow({ booking: b, last, onPress }: { booking: BookingListItem; 
 			<View style={{ backgroundColor: barColor }} className="w-[3px] h-9 rounded-full" />
 
 			<View className="flex-1">
-				<View className="flex-row items-center gap-[5px]">
-					{b.isRecurring && <Icon name="loop" size={13} color={colors.blue} />}
-					<Text className="text-lg font-semibold text-ink tracking-[-0.2px]">{b.client.name}</Text>
-				</View>
+				<Text className="text-lg font-semibold text-ink tracking-[-0.2px]">{b.client.fullName}</Text>
 				<View className="flex-row items-center gap-[5px] mt-[2px]">
 					<Text className="text-base text-secondary">{joinedServiceName(b)}</Text>
-					<TypeBadge type={b.bookingType} />
+					<TypeBadge type={bookingType} />
 				</View>
 			</View>
 
-			<Text className="text-xl font-bold text-ink tracking-[-0.3px]">${b.totalPrice}</Text>
+			<Text className="text-xl font-bold text-ink tracking-[-0.3px]">${b.priceUsd}</Text>
 		</Pressable>
 	);
 }

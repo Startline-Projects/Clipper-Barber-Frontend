@@ -173,6 +173,26 @@ export async function resetPassword(
   await apiClient.post('/auth/reset-password', body, { signal: opts.signal });
 }
 
+export async function verifyEmail(
+  body: { token: string; type?: 'signup' | 'email' },
+  opts: RequestOptions = {},
+): Promise<void> {
+  await apiClient.post(
+    '/auth/verify-email',
+    { token: body.token, type: body.type ?? 'signup' },
+    { signal: opts.signal },
+  );
+}
+
+export async function resendVerification(
+  body: { email: string },
+  opts: RequestOptions = {},
+): Promise<void> {
+  await apiClient.post('/auth/resend-verification', body, {
+    signal: opts.signal,
+  });
+}
+
 export async function changePassword(
   body: { currentPassword: string; newPassword: string },
   opts: RequestOptions = {},
